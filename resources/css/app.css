@@ -1,0 +1,145 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    --font-mono:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+    /* Enforce 0 corner radius across all Tailwind radius scale */
+    --radius: 0px;
+    --radius-none: 0px;
+    --radius-xs: 0px;
+    --radius-sm: 0px;
+    --radius-md: 0px;
+    --radius-lg: 0px;
+    --radius-xl: 0px;
+    --radius-2xl: 0px;
+    --radius-3xl: 0px;
+    --radius-full: 0px;
+
+    /* Theme color variables mapped to Tailwind utilities */
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+    /* Clean light theme option */
+    --background: oklch(0.99 0 0);
+    --foreground: oklch(0.12 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.12 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.12 0 0);
+    --primary: oklch(0.62 0.24 25.5); /* Signature Laravel red */
+    --primary-foreground: oklch(1 0 0);
+    --secondary: oklch(0.95 0 0);
+    --secondary-foreground: oklch(0.15 0 0);
+    --muted: oklch(0.94 0 0);
+    --muted-foreground: oklch(0.48 0 0);
+    --accent: oklch(0.96 0.02 25.5);
+    --accent-foreground: oklch(0.15 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(1 0 0);
+    --border: oklch(0.88 0 0);
+    --input: oklch(0.88 0 0);
+    --ring: oklch(0.62 0.24 25.5);
+    --radius: 0px;
+    --sidebar: oklch(0.98 0 0);
+    --sidebar-foreground: oklch(0.12 0 0);
+    --sidebar-primary: oklch(0.62 0.24 25.5);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(0.94 0 0);
+    --sidebar-accent-foreground: oklch(0.12 0 0);
+    --sidebar-border: oklch(0.88 0 0);
+    --sidebar-ring: oklch(0.62 0.24 25.5);
+}
+
+.dark {
+    /* Primary dark theme default — Laravel.com inspired (architectural charcoal, crisp borders, signature red) */
+    --background: oklch(0.12 0.01 260); /* Deep dark background */
+    --foreground: oklch(0.985 0 0); /* Sharp crisp white typography */
+    --card: oklch(0.15 0.01 260); /* Architectural card surface */
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.15 0.01 260);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.62 0.24 25.5); /* Signature Laravel Red (#ff2d20) */
+    --primary-foreground: oklch(1 0 0);
+    --secondary: oklch(0.19 0.01 260);
+    --secondary-foreground: oklch(0.95 0 0);
+    --muted: oklch(0.18 0.01 260);
+    --muted-foreground: oklch(0.65 0.01 260);
+    --accent: oklch(0.22 0.02 25.5); /* Subtle dark coral hover */
+    --accent-foreground: oklch(1 0 0);
+    --destructive: oklch(0.55 0.22 25);
+    --destructive-foreground: oklch(1 0 0);
+    --border: oklch(0.24 0.01 260); /* Crisp 1px structural grid lines */
+    --input: oklch(0.24 0.01 260);
+    --ring: oklch(0.62 0.24 25.5);
+    --radius: 0px;
+    --sidebar: oklch(0.10 0.01 260);
+    --sidebar-foreground: oklch(0.95 0 0);
+    --sidebar-primary: oklch(0.62 0.24 25.5);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(0.18 0.01 260);
+    --sidebar-accent-foreground: oklch(1 0 0);
+    --sidebar-border: oklch(0.22 0.01 260);
+    --sidebar-ring: oklch(0.62 0.24 25.5);
+}
+
+@layer base {
+    /* Absolute 0 corner radius rule across all elements: edgy, sharp, and architectural */
+    *, *::before, *::after {
+        border-radius: 0px !important;
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        font-feature-settings: 'rlig' 1, 'calt' 1;
+    }
+}
