@@ -17,7 +17,6 @@ class DeadlineUrgencyService
     /**
      * Calculate comprehensive deadline urgency metrics for a given assignment.
      *
-     * @param  Assignment  $assignment
      * @param  CarbonInterface|null  $now  Optional clock instance for deterministic testing.
      * @return array<string, mixed>
      */

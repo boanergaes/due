@@ -20,7 +20,7 @@ class DeadlineUrgencyServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new DeadlineUrgencyService();
+        $this->service = new DeadlineUrgencyService;
     }
 
     public function test_assignment_past_deadline_is_overdue(): void

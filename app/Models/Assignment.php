@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AssignmentStatus;
+use App\Services\DeadlineUrgencyService;
 use Database\Factories\AssignmentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -70,7 +71,7 @@ class Assignment extends Model
      */
     public function getUrgencyAttribute(): array
     {
-        return app(\App\Services\DeadlineUrgencyService::class)->calculate($this);
+        return app(DeadlineUrgencyService::class)->calculate($this);
     }
 
     /**
