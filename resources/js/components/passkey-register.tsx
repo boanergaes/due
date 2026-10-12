@@ -66,7 +66,7 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
 
     if (!showForm) {
         return (
-            <Button variant="outline" onClick={() => setShowForm(true)}>
+            <Button variant="outline" className="rounded-none" onClick={() => setShowForm(true)}>
                 Add passkey
             </Button>
         );
@@ -75,7 +75,7 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
     return (
         <form
             onSubmit={handleSubmit}
-            className="space-y-4 rounded-lg border border-border bg-muted/50 p-4"
+            className="space-y-4 rounded-none border border-border bg-muted/50 p-4"
         >
             <div className="grid gap-2">
                 <Label htmlFor="passkey-name">Passkey name</Label>
@@ -85,7 +85,7 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g., MacBook Pro, iPhone"
-                    className="mt-1 block w-full border-foreground/20"
+                    className="mt-1 block w-full border-foreground/20 rounded-none"
                     autoFocus
                 />
                 <p className="text-xs text-muted-foreground">
@@ -96,10 +96,10 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
             {error && <InputError message={error} />}
 
             <div className="flex gap-2">
-                <Button type="submit" disabled={isLoading || !name.trim()}>
+                <Button type="submit" className="rounded-none" disabled={isLoading || !name.trim()}>
                     {isLoading ? 'Registering...' : 'Register passkey'}
                 </Button>
-                <Button type="button" variant="ghost" onClick={handleCancel}>
+                <Button type="button" variant="ghost" className="rounded-none" onClick={handleCancel}>
                     Cancel
                 </Button>
             </div>

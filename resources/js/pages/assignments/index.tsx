@@ -219,6 +219,7 @@ export default function AssignmentsIndex({
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
                                 placeholder="Search by title or description..."
+                                aria-label="Search assignments"
                                 className="h-9 w-full border border-border bg-background pl-9 pr-20 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:border-primary outline-none"
                             />
                             <button
@@ -267,6 +268,7 @@ export default function AssignmentsIndex({
                                 <select
                                     value={filters.class_id ?? ''}
                                     onChange={(e) => applyFilters({ class_id: e.target.value || null })}
+                                    aria-label="Filter by course"
                                     className="h-8 border border-border bg-background px-2 text-xs font-mono text-foreground outline-none focus:border-primary"
                                 >
                                     <option value="">All Courses ({classes.length})</option>
@@ -284,6 +286,7 @@ export default function AssignmentsIndex({
                                 <select
                                     value={filters.urgency ?? ''}
                                     onChange={(e) => applyFilters({ urgency: e.target.value || null })}
+                                    aria-label="Filter by urgency"
                                     className="h-8 border border-border bg-background px-2 text-xs font-mono text-foreground outline-none focus:border-primary"
                                 >
                                     <option value="">All Deadlines</option>
@@ -302,6 +305,7 @@ export default function AssignmentsIndex({
                                     type="date"
                                     value={startDateInput}
                                     onChange={(e) => setStartDateInput(e.target.value)}
+                                    aria-label="Start date filter"
                                     className="bg-transparent text-xs text-foreground outline-none"
                                 />
                                 <span className="text-muted-foreground">To:</span>
@@ -309,6 +313,7 @@ export default function AssignmentsIndex({
                                     type="date"
                                     value={endDateInput}
                                     onChange={(e) => setEndDateInput(e.target.value)}
+                                    aria-label="End date filter"
                                     className="bg-transparent text-xs text-foreground outline-none"
                                 />
                                 <button
@@ -370,7 +375,7 @@ export default function AssignmentsIndex({
                 ) : (
                     <div className="space-y-4">
                         <div className="overflow-x-auto border border-border bg-card">
-                            <table className="w-full text-left text-sm">
+                            <table className="w-full min-w-[680px] text-left text-sm">
                                 <thead className="border-b border-border bg-muted/40 font-mono text-xs uppercase tracking-wider text-muted-foreground">
                                     <tr>
                                         <th scope="col" className="px-5 py-3.5 font-semibold">Title</th>

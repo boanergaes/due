@@ -341,6 +341,7 @@ export default function AssignmentsShow({ assignment }: PageProps) {
                             value={addNoteForm.data.content}
                             onChange={(e) => addNoteForm.setData('content', e.target.value)}
                             placeholder="Add a new note (e.g. key reference links, reminder on professor feedback, teammate tasks)..."
+                            aria-label="Add a note"
                             rows={3}
                             className="w-full border border-input bg-background p-3 text-sm text-foreground outline-none focus:border-ring rounded-none"
                             required
@@ -389,6 +390,7 @@ export default function AssignmentsShow({ assignment }: PageProps) {
                                                 title="Edit note"
                                             >
                                                 <Pencil className="size-3.5" />
+                                                <span className="sr-only">Edit note</span>
                                             </button>
                                             <button
                                                 type="button"
@@ -397,6 +399,7 @@ export default function AssignmentsShow({ assignment }: PageProps) {
                                                 title="Delete note"
                                             >
                                                 <Trash2 className="size-3.5" />
+                                                <span className="sr-only">Delete note</span>
                                             </button>
                                         </div>
                                     </div>
@@ -423,6 +426,7 @@ export default function AssignmentsShow({ assignment }: PageProps) {
                         <textarea
                             value={editNoteForm.data.content}
                             onChange={(e) => editNoteForm.setData('content', e.target.value)}
+                            aria-label="Edit note content"
                             rows={4}
                             className="w-full border border-input bg-background p-3 text-sm text-foreground outline-none focus:border-ring rounded-none"
                             required

@@ -28,7 +28,7 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
     return (
         <div className="flex items-center justify-between border-b p-4 last:border-b-0">
             <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none bg-muted">
                     <KeyRound className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="space-y-1">
@@ -37,7 +37,7 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
                             {passkey.name}
                         </p>
                         {passkey.authenticator && (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase ring-1 ring-border ring-inset">
+                            <span className="inline-flex items-center gap-1 rounded-none bg-muted px-2 py-0.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase ring-1 ring-border ring-inset">
                                 {passkey.authenticator}
                             </span>
                         )}
@@ -61,13 +61,13 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        className="rounded-none text-destructive hover:bg-destructive/10 hover:text-destructive"
                     >
                         <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Remove</span>
                     </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="rounded-none">
                     <DialogTitle>Remove passkey</DialogTitle>
                     <DialogDescription>
                         Are you sure you want to remove the "{passkey.name}"
@@ -76,12 +76,13 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
                     </DialogDescription>
                     <DialogFooter className="gap-2">
                         <DialogClose asChild>
-                            <Button variant="secondary">Cancel</Button>
+                            <Button variant="secondary" className="rounded-none">Cancel</Button>
                         </DialogClose>
                         <Button
                             variant="destructive"
                             onClick={handleDelete}
                             disabled={isDeleting}
+                            className="rounded-none"
                         >
                             {isDeleting ? 'Removing...' : 'Remove passkey'}
                         </Button>

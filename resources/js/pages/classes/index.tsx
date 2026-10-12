@@ -112,7 +112,7 @@ export default function ClassesIndex({ classes }: PageProps) {
                 ) : (
                     <div className="space-y-4">
                         <div className="overflow-x-auto border border-border bg-card">
-                            <table className="w-full text-left text-sm">
+                            <table className="w-full min-w-[640px] text-left text-sm">
                                 <thead className="border-b border-border bg-muted/40 font-mono text-xs uppercase tracking-wider text-muted-foreground">
                                     <tr>
                                         <th scope="col" className="px-5 py-3.5 font-semibold">Course</th>

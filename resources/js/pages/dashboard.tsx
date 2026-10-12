@@ -361,7 +361,7 @@ export default function Dashboard({
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm">
+                            <table className="w-full min-w-[640px] text-left text-sm">
                                 <thead className="border-b border-border bg-muted/30 font-mono text-xs uppercase text-muted-foreground">
                                     <tr>
                                         <th scope="col" className="px-5 py-3 font-semibold">Assignment</th>
