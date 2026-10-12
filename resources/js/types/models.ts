@@ -76,3 +76,33 @@ export interface PaginatedData<T> {
     to: number | null;
     total: number;
 }
+
+export interface DashboardMetrics {
+    total: number;
+    pending: number;
+    in_progress: number;
+    completed: number;
+    overdue: number;
+    due_today: number;
+    completion_rate: number;
+    completed_on_time: number;
+    on_time_rate: number | null;
+    completed_recently: number;
+}
+
+export interface ClassWorkload {
+    id: number;
+    course_name: string;
+    total_assignments: number;
+    active_assignments: number;
+    completed_assignments: number;
+}
+
+export interface DashboardPageProps {
+    [key: string]: unknown;
+    metrics: DashboardMetrics;
+    upcoming_assignments: Assignment[];
+    overdue_assignments: Assignment[];
+    workload_by_class: ClassWorkload[];
+}
+

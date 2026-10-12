@@ -9,6 +9,7 @@ use App\Http\Requests\Assignments\UpdateAssignmentStatusRequest;
 use App\Models\Assignment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,20 +17,65 @@ use Inertia\Response;
 class AssignmentController extends Controller
 {
     /**
-     * Display a listing of the user's assignments with optional filtering and eager loading.
+     * Display a listing of the user's assignments with optional filtering, search, and eager loading.
      */
     public function index(Request $request): Response
     {
+        $request->validate([
+            'search' => ['nullable', 'string', 'max:150'],
+            'status' => ['nullable', 'string'],
+            'class_id' => ['nullable', 'integer'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'urgency' => ['nullable', 'string'],
+        ]);
+
         $query = $request->user()
             ->assignments()
             ->with('courseClass');
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->string('status'));
+        // Text search across title and description
+        if ($request->filled('search')) {
+            $search = $request->string('search')->trim()->toString();
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
         }
 
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status')->toString());
+        }
+
+        // Class filter
         if ($request->filled('class_id')) {
             $query->where('class_id', $request->integer('class_id'));
+        }
+
+        // Date range filters
+        if ($request->filled('start_date')) {
+            $query->where('deadline', '>=', Carbon::parse($request->input('start_date'))->startOfDay());
+        }
+
+        if ($request->filled('end_date')) {
+            $query->where('deadline', '<=', Carbon::parse($request->input('end_date'))->endOfDay());
+        }
+
+        // Urgency preset filter
+        if ($request->filled('urgency')) {
+            $now = now();
+            match ($request->string('urgency')->toString()) {
+                'overdue' => $query->where('status', '!=', AssignmentStatus::Completed)
+                    ->where('deadline', '<', $now),
+                'due_today' => $query->where('status', '!=', AssignmentStatus::Completed)
+                    ->whereBetween('deadline', [$now->copy()->startOfDay(), $now->copy()->endOfDay()]),
+                'due_soon' => $query->where('status', '!=', AssignmentStatus::Completed)
+                    ->whereBetween('deadline', [$now, $now->copy()->addHours(48)]),
+                'upcoming' => $query->where('status', '!=', AssignmentStatus::Completed)
+                    ->where('deadline', '>=', $now),
+                default => null,
+            };
         }
 
         $assignments = $query->orderBy('deadline', 'asc')
@@ -45,8 +91,12 @@ class AssignmentController extends Controller
             'assignments' => $assignments,
             'classes' => $classes,
             'filters' => [
+                'search' => $request->string('search')->toString() ?: null,
                 'status' => $request->string('status')->toString() ?: null,
                 'class_id' => $request->string('class_id')->toString() ?: null,
+                'start_date' => $request->string('start_date')->toString() ?: null,
+                'end_date' => $request->string('end_date')->toString() ?: null,
+                'urgency' => $request->string('urgency')->toString() ?: null,
             ],
         ]);
     }
