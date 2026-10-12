@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Http\Requests\Classes;
+
+use App\Models\CourseClass;
+use Illuminate\Foundation\Http\FormRequest;
+
+class UpdateCourseClassRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        $courseClass = $this->route('courseClass');
+
+        return $courseClass instanceof CourseClass
+            ? $this->user()?->can('update', $courseClass) ?? false
+            : true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'course_name' => ['required', 'string', 'max:255'],
+            'teacher_name' => ['nullable', 'string', 'max:255'],
+            'teacher_contact' => ['nullable', 'string', 'max:255'],
+            'credit_hours' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'ects' => ['nullable', 'numeric', 'min:0', 'max:100'],
+        ];
+    }
+}
