@@ -13,10 +13,22 @@ export default function Appearance() {
             <div className="space-y-6">
                 <Heading
                     variant="small"
-                    title="Appearance settings"
-                    description="Update the appearance settings for your account"
+                    title="Appearance & Theme"
+                    description="Customize the visual theme of the Due workspace. Your selection persists across browser refreshes and sessions."
                 />
-                <AppearanceTabs />
+
+                <div className="border border-border bg-card p-5 space-y-4">
+                    <div>
+                        <h3 className="text-sm font-semibold text-foreground font-mono uppercase tracking-wide">
+                            Interface Color Mode
+                        </h3>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Due is designed with an architectural dark theme by default, featuring high-contrast borders and sharp edges.
+                        </p>
+                    </div>
+
+                    <AppearanceTabs />
+                </div>
             </div>
         </>
     );

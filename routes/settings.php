@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\Settings\SessionController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('user-password.update');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+
+    Route::get('settings/sessions', [SessionController::class, 'edit'])->name('sessions.edit');
+    Route::delete('settings/sessions/others', [SessionController::class, 'destroyOtherSessions'])->name('sessions.destroy-others');
+    Route::delete('settings/sessions/{sessionId}', [SessionController::class, 'destroySession'])->name('sessions.destroy');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {
