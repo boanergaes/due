@@ -1,5 +1,6 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
+    AlertCircle,
     ArrowLeft,
     Calendar,
     CheckCircle2,
@@ -7,10 +8,13 @@ import {
     Clock,
     FileText,
     GraduationCap,
+    MessageSquare,
     Pencil,
+    Plus,
     Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,21 +25,45 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { UrgencyBadge } from '@/components/urgency-badge';
 import { dashboard } from '@/routes';
 import * as assignmentsRoutes from '@/routes/assignments';
 import * as classesRoutes from '@/routes/classes';
-import type { Assignment } from '@/types';
+import type { Assignment, AssignmentNote } from '@/types';
 
 interface PageProps {
+    [key: string]: unknown;
     assignment: Assignment;
+    flash?: {
+        success?: string | null;
+        error?: string | null;
+    };
+    errors?: Record<string, string>;
 }
 
 export default function AssignmentsShow({ assignment }: PageProps) {
-    const [confirmDelete, setConfirmDelete] = useState(false);
-    const { delete: destroy, processing } = useForm();
+    const { flash, errors: pageErrors } = usePage<PageProps>().props;
 
-    const handleDelete = () => {
-        destroy(assignmentsRoutes.destroy(assignment).url, {
+    // Delete assignment dialog state
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const { delete: destroyAssignment, processing: deletingAssignment } = useForm();
+
+    // Notes state
+    const [editingNote, setEditingNote] = useState<AssignmentNote | null>(null);
+    const [deletingNote, setDeletingNote] = useState<AssignmentNote | null>(null);
+
+    // Add note form
+    const addNoteForm = useForm({
+        content: '',
+    });
+
+    // Edit note form
+    const editNoteForm = useForm({
+        content: '',
+    });
+
+    const handleDeleteAssignment = () => {
+        destroyAssignment(assignmentsRoutes.destroy(assignment).url, {
             onSuccess: () => setConfirmDelete(false),
         });
     };
@@ -46,6 +74,38 @@ export default function AssignmentsShow({ assignment }: PageProps) {
             { status: newStatus },
             { preserveScroll: true }
         );
+    };
+
+    const handleAddNote = (e: React.FormEvent) => {
+        e.preventDefault();
+        addNoteForm.post(`/assignments/${assignment.id}/notes`, {
+            preserveScroll: true,
+            onSuccess: () => addNoteForm.reset('content'),
+        });
+    };
+
+    const handleStartEditNote = (note: AssignmentNote) => {
+        setEditingNote(note);
+        editNoteForm.setData('content', note.content);
+    };
+
+    const handleUpdateNote = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingNote) return;
+
+        editNoteForm.put(`/assignments/${assignment.id}/notes/${editingNote.id}`, {
+            preserveScroll: true,
+            onSuccess: () => setEditingNote(null),
+        });
+    };
+
+    const handleDeleteNote = () => {
+        if (!deletingNote) return;
+
+        router.delete(`/assignments/${assignment.id}/notes/${deletingNote.id}`, {
+            preserveScroll: true,
+            onSuccess: () => setDeletingNote(null),
+        });
     };
 
     const getStatusBadge = (status: Assignment['status']) => {
@@ -70,6 +130,8 @@ export default function AssignmentsShow({ assignment }: PageProps) {
                 );
         }
     };
+
+    const notes = assignment.notes ?? [];
 
     return (
         <>
@@ -113,6 +175,26 @@ export default function AssignmentsShow({ assignment }: PageProps) {
                     </div>
                 </div>
 
+                {/* Notifications & Flash Messages */}
+                {flash?.success && (
+                    <Alert className="rounded-none border-emerald-500/50 bg-emerald-500/10 text-emerald-300">
+                        <AlertDescription>{flash.success}</AlertDescription>
+                    </Alert>
+                )}
+
+                {/* Urgency Highlight Banner (Overdue Warning) */}
+                {assignment.urgency?.is_overdue && (
+                    <div className="border border-red-500/50 bg-red-500/10 p-4 text-red-400">
+                        <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-wider">
+                            <AlertCircle className="size-4 animate-pulse text-red-500" />
+                            Urgent Warning
+                        </div>
+                        <p className="mt-1 text-sm font-medium">
+                            {assignment.urgency.remark} (Cutoff passed: {assignment.urgency.remaining_time_human}).
+                        </p>
+                    </div>
+                )}
+
                 {/* Key Overview Cards */}
                 <div className="grid gap-4 sm:grid-cols-3">
                     <div className="border border-border bg-card p-5">
@@ -140,9 +222,12 @@ export default function AssignmentsShow({ assignment }: PageProps) {
                     </div>
 
                     <div className="border border-border bg-card p-5">
-                        <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground uppercase">
-                            <Calendar className="size-3.5 text-primary" />
-                            Due Date & Time
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground uppercase">
+                                <Calendar className="size-3.5 text-primary" />
+                                Submission Deadline
+                            </div>
+                            <UrgencyBadge urgency={assignment.urgency} />
                         </div>
                         <div className="mt-2 text-base font-semibold font-mono text-foreground">
                             {new Date(assignment.deadline).toLocaleString([], {
@@ -153,7 +238,9 @@ export default function AssignmentsShow({ assignment }: PageProps) {
                                 minute: '2-digit',
                             })}
                         </div>
-                        <div className="mt-1 text-xs text-muted-foreground">Local submission cutoff</div>
+                        <div className="mt-1 text-xs text-muted-foreground font-mono">
+                            {assignment.urgency?.remark}
+                        </div>
                     </div>
 
                     <div className="border border-border bg-card p-5">
@@ -205,6 +292,9 @@ export default function AssignmentsShow({ assignment }: PageProps) {
                         {assignment.completed_at && (
                             <div className="mt-2 text-[11px] font-mono text-emerald-400">
                                 Completed: {new Date(assignment.completed_at).toLocaleString()}
+                                {assignment.urgency?.is_completed_on_time === false && (
+                                    <span className="block text-red-400">(Submitted late)</span>
+                                )}
                             </div>
                         )}
                     </div>
@@ -227,23 +317,156 @@ export default function AssignmentsShow({ assignment }: PageProps) {
                         </p>
                     )}
                 </div>
+
+                {/* Multiple Notes Section */}
+                <div className="border border-border bg-card p-6 md:p-8 space-y-6">
+                    <div className="flex items-center justify-between border-b border-border pb-4">
+                        <div className="flex items-center gap-2">
+                            <MessageSquare className="size-4 text-primary" />
+                            <h2 className="text-base font-semibold text-foreground">
+                                Assignment Notes
+                            </h2>
+                            <span className="border border-border bg-background px-2 py-0.5 font-mono text-xs text-muted-foreground">
+                                {notes.length}
+                            </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                            Quick notes, references, and task logs
+                        </span>
+                    </div>
+
+                    {/* Add New Note Form */}
+                    <form onSubmit={handleAddNote} className="space-y-3">
+                        <textarea
+                            value={addNoteForm.data.content}
+                            onChange={(e) => addNoteForm.setData('content', e.target.value)}
+                            placeholder="Add a new note (e.g. key reference links, reminder on professor feedback, teammate tasks)..."
+                            rows={3}
+                            className="w-full border border-input bg-background p-3 text-sm text-foreground outline-none focus:border-ring rounded-none"
+                            required
+                        />
+                        {addNoteForm.errors.content && (
+                            <p className="text-xs text-red-400 font-mono">
+                                {addNoteForm.errors.content}
+                            </p>
+                        )}
+                        <div className="flex justify-end">
+                            <Button
+                                type="submit"
+                                size="sm"
+                                disabled={addNoteForm.processing || !addNoteForm.data.content.trim()}
+                                className="rounded-none bg-primary text-primary-foreground hover:bg-primary/90"
+                            >
+                                <Plus className="size-3.5 mr-1" />
+                                {addNoteForm.processing ? 'Saving Note...' : 'Add Note'}
+                            </Button>
+                        </div>
+                    </form>
+
+                    {/* Notes List */}
+                    {notes.length === 0 ? (
+                        <div className="border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+                            No notes added yet. Use the field above to record study links, questions, or progress.
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-border border-t border-border">
+                            {notes.map((note) => (
+                                <div key={note.id} className="py-4 first:pt-4 last:pb-0 flex flex-col gap-2">
+                                    <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
+                                        <span>
+                                            Created: {new Date(note.created_at).toLocaleString([], {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                            })}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleStartEditNote(note)}
+                                                className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                                                title="Edit note"
+                                            >
+                                                <Pencil className="size-3.5" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setDeletingNote(note)}
+                                                className="text-destructive/80 hover:text-destructive transition-colors p-1"
+                                                title="Delete note"
+                                            >
+                                                <Trash2 className="size-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                                        {note.content}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Delete Confirmation Modal */}
-            <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+            {/* Edit Note Modal */}
+            <Dialog open={!!editingNote} onOpenChange={(open) => !open && setEditingNote(null)}>
                 <DialogContent className="rounded-none sm:max-w-md border-border bg-card">
                     <DialogHeader>
-                        <DialogTitle className="text-lg font-bold">Delete Assignment</DialogTitle>
+                        <DialogTitle className="text-lg font-bold">Edit Note</DialogTitle>
                         <DialogDescription className="text-sm text-muted-foreground">
-                            Are you sure you want to delete <span className="font-semibold text-foreground">{assignment.title}</span>? This action cannot be undone.
+                            Update your coursework note content.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleUpdateNote} className="space-y-4">
+                        <textarea
+                            value={editNoteForm.data.content}
+                            onChange={(e) => editNoteForm.setData('content', e.target.value)}
+                            rows={4}
+                            className="w-full border border-input bg-background p-3 text-sm text-foreground outline-none focus:border-ring rounded-none"
+                            required
+                        />
+                        {editNoteForm.errors.content && (
+                            <p className="text-xs text-red-400 font-mono">
+                                {editNoteForm.errors.content}
+                            </p>
+                        )}
+                        <DialogFooter className="gap-2 sm:justify-end">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setEditingNote(null)}
+                                className="rounded-none"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={editNoteForm.processing}
+                                className="rounded-none bg-primary text-primary-foreground"
+                            >
+                                {editNoteForm.processing ? 'Saving...' : 'Save Changes'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Note Confirmation Modal */}
+            <Dialog open={!!deletingNote} onOpenChange={(open) => !open && setDeletingNote(null)}>
+                <DialogContent className="rounded-none sm:max-w-md border-border bg-card">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg font-bold">Delete Note</DialogTitle>
+                        <DialogDescription className="text-sm text-muted-foreground">
+                            Are you sure you want to delete this note? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="gap-2 sm:justify-end">
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => setConfirmDelete(false)}
-                            disabled={processing}
+                            onClick={() => setDeletingNote(null)}
                             className="rounded-none"
                         >
                             Cancel
@@ -251,11 +474,42 @@ export default function AssignmentsShow({ assignment }: PageProps) {
                         <Button
                             type="button"
                             variant="destructive"
-                            onClick={handleDelete}
-                            disabled={processing}
+                            onClick={handleDeleteNote}
                             className="rounded-none"
                         >
-                            {processing ? 'Deleting...' : 'Confirm Delete'}
+                            Delete Note
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Assignment Confirmation Modal */}
+            <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+                <DialogContent className="rounded-none sm:max-w-md border-border bg-card">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg font-bold">Delete Assignment</DialogTitle>
+                        <DialogDescription className="text-sm text-muted-foreground">
+                            Are you sure you want to delete <span className="font-semibold text-foreground">{assignment.title}</span>? This will permanently delete the assignment and all associated notes.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:justify-end">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setConfirmDelete(false)}
+                            disabled={deletingAssignment}
+                            className="rounded-none"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleDeleteAssignment}
+                            disabled={deletingAssignment}
+                            className="rounded-none"
+                        >
+                            {deletingAssignment ? 'Deleting...' : 'Confirm Delete'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -1,5 +1,30 @@
 export type AssignmentStatus = 'pending' | 'in_progress' | 'completed';
 
+export type UrgencyLevel = 'completed' | 'overdue' | 'due_today' | 'due_soon' | 'upcoming';
+
+export interface UrgencyData {
+    urgency_level: UrgencyLevel;
+    label: string;
+    badge_color: 'emerald' | 'red' | 'amber' | 'blue';
+    remaining_time_human: string;
+    remark: string;
+    hours_remaining: number | null;
+    is_overdue: boolean;
+    is_due_today: boolean;
+    is_due_soon: boolean;
+    is_upcoming: boolean;
+    is_completed: boolean;
+    is_completed_on_time: boolean | null;
+}
+
+export interface AssignmentNote {
+    id: number;
+    assignment_id: number;
+    content: string;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface CourseClass {
     id: number;
     user_id: number;
@@ -26,6 +51,8 @@ export interface Assignment {
     created_at: string;
     updated_at: string;
     course_class?: CourseClass;
+    urgency?: UrgencyData;
+    notes?: AssignmentNote[];
 }
 
 export interface PaginationLink {

@@ -43,6 +43,13 @@ class Assignment extends Model
     use HasFactory;
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var list<string>
+     */
+    protected $appends = ['urgency'];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -54,6 +61,16 @@ class Assignment extends Model
             'deadline' => 'datetime',
             'completed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get the calculated deadline urgency metrics for the assignment.
+     *
+     * @return array<string, mixed>
+     */
+    public function getUrgencyAttribute(): array
+    {
+        return app(\App\Services\DeadlineUrgencyService::class)->calculate($this);
     }
 
     /**

@@ -89,7 +89,10 @@ class AssignmentController extends Controller
     {
         Gate::authorize('view', $assignment);
 
-        $assignment->load('courseClass');
+        $assignment->load([
+            'courseClass',
+            'notes' => fn ($query) => $query->latest(),
+        ]);
 
         return Inertia::render('assignments/show', [
             'assignment' => $assignment,

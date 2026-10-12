@@ -31,6 +31,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { UrgencyBadge } from '@/components/urgency-badge';
 import { dashboard } from '@/routes';
 import * as assignmentsRoutes from '@/routes/assignments';
 import * as classesRoutes from '@/routes/classes';
@@ -295,16 +296,19 @@ export default function AssignmentsIndex({
                                             </td>
 
                                             <td className="px-5 py-4 font-mono text-xs text-muted-foreground">
-                                                <span className="flex items-center gap-1.5">
-                                                    <Calendar className="size-3 text-primary" />
-                                                    {new Date(assignment.deadline).toLocaleString([], {
-                                                        year: 'numeric',
-                                                        month: 'short',
-                                                        day: 'numeric',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit',
-                                                    })}
-                                                </span>
+                                                <div className="flex flex-col gap-1 items-start">
+                                                    <span className="flex items-center gap-1.5">
+                                                        <Calendar className="size-3 text-primary" />
+                                                        {new Date(assignment.deadline).toLocaleString([], {
+                                                            year: 'numeric',
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                        })}
+                                                    </span>
+                                                    <UrgencyBadge urgency={assignment.urgency} />
+                                                </div>
                                             </td>
 
                                             <td className="px-5 py-4">
