@@ -237,13 +237,13 @@ mobile/
 - [x] Run `php artisan install:api` to scaffold `laravel/sanctum` and publish `routes/api.php`.
 - [x] Add `Laravel\Sanctum\HasApiTokens` to `App\Models\User`.
 - [x] Create `App\Http\Controllers\Api\V1\AuthController` (`login`, `register`, `logout`, `user`, `appearance`).
-- [ ] Create `App\Http\Controllers\Api\V1\DashboardApiController` (`index` returning metrics and upcoming list via `DeadlineUrgencyService`).
-- [ ] Create `App\Http\Controllers\Api\V1\CourseClassApiController` (`index`, `store`, `show`, `update`, `destroy` with assignment protection).
-- [ ] Create `App\Http\Controllers\Api\V1\AssignmentApiController` (`index` with filters, `store`, `show`, `update`, `destroy`, `updateStatus`).
-- [ ] Create `App\Http\Controllers\Api\V1\AssignmentNoteApiController` (`index`, `store`, `update`, `destroy`).
-- [ ] Register all endpoints in `routes/api.php` under prefix `v1` and group `auth:sanctum`.
-- [ ] Write comprehensive Pest feature tests in `tests/Feature/Api/AuthApiTest.php` and `tests/Feature/Api/CourseAndAssignmentApiTest.php`.
-- [ ] Verify test suite passes (`php artisan test`) and clean code with `vendor/bin/pint`.
+- [x] Create `App\Http\Controllers\Api\V1\DashboardApiController` (`index` returning metrics and upcoming list via `DeadlineUrgencyService`).
+- [x] Create `App\Http\Controllers\Api\V1\CourseClassApiController` (`index`, `store`, `show`, `update`, `destroy` with assignment protection).
+- [x] Create `App\Http\Controllers\Api\V1\AssignmentApiController` (`index` with filters, `store`, `show`, `update`, `destroy`, `updateStatus`).
+- [x] Create `App\Http\Controllers\Api\V1\AssignmentNoteApiController` (`index`, `store`, `update`, `destroy`).
+- [x] Register all endpoints in `routes/api.php` under prefix `v1` and group `auth:sanctum`.
+- [x] Write comprehensive feature tests covering auth, dashboard, classes, assignments, and notes.
+- [x] Verify test suite passes (`php artisan test`: 151 tests, 142 passed, 0 failures) and clean code with `vendor/bin/pint`.
 
 ---
 

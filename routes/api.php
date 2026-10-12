@@ -1,8 +1,40 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\V1\AssignmentApiController;
+use App\Http\Controllers\Api\V1\AssignmentNoteApiController;
+use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CourseClassApiController;
+use App\Http\Controllers\Api\V1\DashboardApiController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+Route::prefix('v1')->as('api.v1.')->group(function () {
+    // Guest Authentication
+    Route::post('auth/login', [AuthController::class, 'login']);
+    Route::post('auth/register', [AuthController::class, 'register']);
+
+    // Authenticated Mobile Endpoints
+    Route::middleware('auth:sanctum')->group(function () {
+        // User Profile, Preferences & Logout
+        Route::get('auth/user', [AuthController::class, 'user']);
+        Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::patch('auth/appearance', [AuthController::class, 'updateAppearance']);
+
+        // Dashboard Metrics & Upcoming Feed
+        Route::get('dashboard', [DashboardApiController::class, 'index']);
+
+        // Academic Course Classes CRUD
+        Route::apiResource('classes', CourseClassApiController::class)->parameters([
+            'classes' => 'courseClass',
+        ]);
+
+        // Coursework Assignments CRUD & Quick Status Toggle
+        Route::patch('assignments/{assignment}/status', [AssignmentApiController::class, 'updateStatus']);
+        Route::apiResource('assignments', AssignmentApiController::class);
+
+        // Assignment Notes CRUD
+        Route::get('assignments/{assignment}/notes', [AssignmentNoteApiController::class, 'index']);
+        Route::post('assignments/{assignment}/notes', [AssignmentNoteApiController::class, 'store']);
+        Route::put('assignments/{assignment}/notes/{note}', [AssignmentNoteApiController::class, 'update']);
+        Route::delete('assignments/{assignment}/notes/{note}', [AssignmentNoteApiController::class, 'destroy']);
+    });
+});

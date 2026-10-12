@@ -116,4 +116,23 @@ class AuthController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Update and persist the user's appearance preference.
+     */
+    public function updateAppearance(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'appearance' => ['required', 'string', 'in:light,dark,system'],
+        ]);
+
+        $request->user()->update([
+            'appearance' => $validated['appearance'],
+        ]);
+
+        return response()->json([
+            'message' => 'Appearance preference updated successfully',
+            'appearance' => $validated['appearance'],
+        ]);
+    }
 }
