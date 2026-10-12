@@ -1,3 +1,4 @@
+import { router } from '@inertiajs/react';
 import { useSyncExternalStore } from 'react';
 
 export type ResolvedAppearance = 'light' | 'dark';
@@ -29,12 +30,37 @@ const setCookie = (name: string, value: string, days = 365): void => {
     document.cookie = `${name}=${value};path=/;max-age=${maxAge};SameSite=Lax`;
 };
 
-const getStoredAppearance = (): Appearance => {
+const getCookie = (name: string): string | null => {
+    if (typeof document === 'undefined') {
+        return null;
+    }
+
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+        return parts.pop()?.split(';').shift() ?? null;
+    }
+
+    return null;
+};
+
+const getInitialAppearance = (): Appearance => {
     if (typeof window === 'undefined') {
         return 'dark';
     }
 
-    return (localStorage.getItem('appearance') as Appearance) || 'dark';
+    // Read cookie preference - NO localStorage used!
+    const cookieVal = getCookie('appearance');
+    if (cookieVal === 'light' || cookieVal === 'dark' || cookieVal === 'system') {
+        return cookieVal;
+    }
+
+    // Fall back to server-rendered HTML class
+    if (document.documentElement.classList.contains('dark')) {
+        return 'dark';
+    }
+
+    return 'dark';
 };
 
 const isDarkMode = (appearance: Appearance): boolean => {
@@ -75,16 +101,36 @@ export function initializeTheme(): void {
         return;
     }
 
-    if (!localStorage.getItem('appearance')) {
-        localStorage.setItem('appearance', 'dark');
-        setCookie('appearance', 'dark');
+    // Clean up any legacy localStorage entry
+    try {
+        localStorage.removeItem('appearance');
+    } catch {
+        // Ignore in restricted environments
     }
 
-    currentAppearance = getStoredAppearance();
+    currentAppearance = getInitialAppearance();
     applyTheme(currentAppearance);
 
     // Set up system theme change listener
     mediaQuery()?.addEventListener('change', handleSystemThemeChange);
+
+    // Keep appearance synchronized when navigating between Inertia pages
+    try {
+        router.on('success', (event) => {
+            const serverAppearance = (event.detail.page.props as { appearance?: Appearance })?.appearance;
+            if (
+                serverAppearance &&
+                (serverAppearance === 'light' || serverAppearance === 'dark' || serverAppearance === 'system') &&
+                serverAppearance !== currentAppearance
+            ) {
+                currentAppearance = serverAppearance;
+                applyTheme(currentAppearance);
+                notify();
+            }
+        });
+    } catch {
+        // Ignore outside Inertia environment
+    }
 }
 
 export function useAppearance(): UseAppearanceReturn {
@@ -101,14 +147,25 @@ export function useAppearance(): UseAppearanceReturn {
     const updateAppearance = (mode: Appearance): void => {
         currentAppearance = mode;
 
-        // Store in localStorage for client-side persistence...
-        localStorage.setItem('appearance', mode);
-
-        // Store in cookie for SSR...
+        // Persist via cookie for SSR & server sessions (no localStorage)
         setCookie('appearance', mode);
 
         applyTheme(mode);
         notify();
+
+        // Persist to user record in database if authenticated
+        try {
+            router.patch(
+                '/settings/appearance',
+                { appearance: mode },
+                {
+                    preserveScroll: true,
+                    preserveState: true,
+                },
+            );
+        } catch {
+            // Silently fallback if router is not mounted yet
+        }
     };
 
     return { appearance, resolvedAppearance, updateAppearance } as const;

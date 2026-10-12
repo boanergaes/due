@@ -267,10 +267,11 @@ Connect any visual database manager to your local Docker MySQL instance:
    - Every element—buttons, inputs, cards, tables, badges, modals, tooltips, and avatars—strictly uses `border-radius: 0px` (`rounded-none`).
    - Reinforced at root level via `*, *::before, *::after { border-radius: 0px !important; }` in [resources/css/app.css](file:///home/zeamanuel/projects/zainx/due/resources/css/app.css).
 
-2. **Default Dark Theme & Architectural Palette:**
+2. **Default Dark Theme & Database-Backed Persistence (Zero Local Storage):**
    - Default theme is dark for all visitors, inspired by the high-contrast aesthetic of `laravel.com`.
    - Palette powered by semantic CSS variables (`--background`, `--foreground`, `--border`, `--card`, `--primary`, `--muted`).
    - Monospace typography used for all timestamps, credit units, ECTS tags, and status badges.
+   - **Zero LocalStorage:** The user's theme preference (`light`, `dark`, `system`) is persisted directly in the MySQL database (`users.appearance`) and synchronized via cookie for instant server-side rendering. User preferences remain consistent across different computers, browsers, and mobile devices without relying on `localStorage`.
 
 3. **Database Integrity & Foreign Keys:**
    - **`classes`:** Belongs to `users` (`cascadeOnDelete`).
@@ -278,5 +279,5 @@ Connect any visual database manager to your local Docker MySQL instance:
    - **`assignment_notes`:** Belongs to `assignments` (`cascadeOnDelete`).
 
 4. **Automated Testing Suite:**
-   - **108 tests** written with Pest 5 under `tests/Feature/` and `tests/Unit/`.
-   - Covers guest protection, authenticated CRUD, ownership enforcement, deadline calculations, notes CRUD, session management, and query count assertions.
+   - **114 tests** written with Pest 5 under `tests/Feature/` and `tests/Unit/`.
+   - Covers guest protection, authenticated CRUD, ownership enforcement, deadline calculations, notes CRUD, session management, theme persistence, and query count assertions.

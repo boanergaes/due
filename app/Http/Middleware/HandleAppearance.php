@@ -16,8 +16,17 @@ class HandleAppearance
      */
     public function handle(Request $request, Closure $next): Response
     {
-        View::share('appearance', $request->cookie('appearance') ?? 'dark');
+        $appearance = $request->user()?->appearance ?? $request->cookie('appearance') ?? 'dark';
 
-        return $next($request);
+        View::share('appearance', $appearance);
+
+        $response = $next($request);
+
+        // Synchronize cookie with the authenticated user's persisted database preference
+        if ($request->user() && $request->cookie('appearance') !== $request->user()->appearance) {
+            $response->cookie(cookie()->forever('appearance', $request->user()->appearance));
+        }
+
+        return $response;
     }
 }

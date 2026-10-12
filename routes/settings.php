@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Controllers\Settings\SessionController;
@@ -24,7 +25,8 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('throttle:6,1')
         ->name('user-password.update');
 
-    Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+    Route::get('settings/appearance', [AppearanceController::class, 'edit'])->name('appearance.edit');
+    Route::patch('settings/appearance', [AppearanceController::class, 'update'])->name('appearance.update');
 
     Route::get('settings/sessions', [SessionController::class, 'edit'])->name('sessions.edit');
     Route::delete('settings/sessions/others', [SessionController::class, 'destroyOtherSessions'])->name('sessions.destroy-others');
