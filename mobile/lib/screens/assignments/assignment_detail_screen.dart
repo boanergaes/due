@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../models/assignment.dart';
+import '../../models/assignment_note.dart';
 import '../../providers/assignment_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/urgency_badge.dart';
+import '../../widgets/zero_button.dart';
 import '../../widgets/zero_card.dart';
 import 'assignment_form_screen.dart';
+import 'note_form_dialog.dart';
 
 class AssignmentDetailScreen extends StatefulWidget {
   final int assignmentId;
@@ -92,6 +95,61 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
 
   Future<void> _handleStatusChange(String newStatus) async {
     await context.read<AssignmentProvider>().updateStatus(widget.assignmentId, newStatus);
+  }
+
+  Future<void> _handleAddNote() async {
+    final content = await NoteFormDialog.show(context);
+    if (content != null && content.isNotEmpty && mounted) {
+      final created = await context.read<AssignmentProvider>().addNote(widget.assignmentId, content);
+      if (mounted && created != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Study note added', style: TextStyle(fontFamily: 'monospace')),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleEditNote(AssignmentNote note) async {
+    final content = await NoteFormDialog.show(context, note: note);
+    if (content != null && content.isNotEmpty && mounted) {
+      final updated = await context.read<AssignmentProvider>().updateNote(widget.assignmentId, note.id, content);
+      if (mounted && updated != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Study note updated', style: TextStyle(fontFamily: 'monospace')),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleDeleteNote(AssignmentNote note) async {
+    final confirmed = await ConfirmDialog.show(
+      context: context,
+      title: 'Delete Note?',
+      message: 'Are you sure you want to permanently delete this study note?',
+      confirmText: 'DELETE',
+      isDestructive: true,
+    );
+
+    if (confirmed == true && mounted) {
+      final success = await context.read<AssignmentProvider>().deleteNote(widget.assignmentId, note.id);
+      if (mounted && success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Note deleted', style: TextStyle(fontFamily: 'monospace')),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -387,7 +445,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Notes Card (Preview / Preparation for Phase M7)
+              // Interactive Coursework Notes Section
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -400,39 +458,120 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
                       letterSpacing: 0.5,
                     ),
                   ),
+                  GestureDetector(
+                    onTap: _handleAddNote,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.coral.withValues(alpha: 0.12),
+                        border: Border.all(color: AppColors.coral.withValues(alpha: 0.5)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add, size: 14, color: AppColors.coral),
+                          SizedBox(width: 4),
+                          Text(
+                            'ADD NOTE',
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.coral,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
-              ZeroCard(
-                padding: const EdgeInsets.all(16),
-                child: assignment.notes.isNotEmpty
-                    ? Column(
-                        children: assignment.notes.map((note) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('• ', style: TextStyle(fontSize: 16, color: AppColors.coral)),
-                                Expanded(
-                                  child: Text(
-                                    note.content,
-                                    style: const TextStyle(fontSize: 13, height: 1.4),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      )
-                    : Text(
-                        'No notes attached yet. Study notes and reminders will sync here in Phase 7.',
-                        style: TextStyle(
-                          fontSize: 12,
+
+              if (assignment.notes.isEmpty)
+                ZeroCard(
+                  padding: const EdgeInsets.all(20),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.note_alt_outlined,
+                          size: 28,
                           color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
                         ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'No study notes attached yet.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ZeroButton(
+                          label: 'ADD FIRST NOTE',
+                          icon: Icons.add,
+                          variant: ZeroButtonVariant.outline,
+                          onPressed: _handleAddNote,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                ...assignment.notes.map((note) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: ZeroCard(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            note.content,
+                            style: const TextStyle(fontSize: 13, height: 1.45),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              if (note.createdAt != null)
+                                Text(
+                                  DateFormat('MMM d, yyyy • HH:mm').format(note.createdAt!),
+                                  style: TextStyle(
+                                    fontFamily: 'monospace',
+                                    fontSize: 10,
+                                    color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                  ),
+                                )
+                              else
+                                const SizedBox.shrink(),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined, size: 16),
+                                    tooltip: 'Edit Note',
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.all(4),
+                                    onPressed: () => _handleEditNote(note),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.danger),
+                                    tooltip: 'Delete Note',
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.all(4),
+                                    onPressed: () => _handleDeleteNote(note),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-              ),
+                    ),
+                  );
+                }),
             ],
           ),
         ),

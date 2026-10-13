@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../config/api_config.dart';
 import '../models/assignment.dart';
+import '../models/assignment_note.dart';
 import '../services/api_client.dart';
 
 class AssignmentProvider extends ChangeNotifier {
@@ -347,6 +348,126 @@ class AssignmentProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  /// Fetch notes for an assignment
+  Future<List<AssignmentNote>> fetchNotes(int assignmentId) async {
+    try {
+      final response = await apiClient.get(ApiConfig.assignmentNotes(assignmentId));
+      if (response != null && response is Map<String, dynamic> && response['data'] is List) {
+        final notes = (response['data'] as List)
+            .map((n) => AssignmentNote.fromJson(n as Map<String, dynamic>))
+            .toList();
+
+        if (_selectedAssignment?.id == assignmentId) {
+          _selectedAssignment = _selectedAssignment!.copyWith(notes: notes);
+          notifyListeners();
+        }
+        return notes;
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Add a study note to an assignment
+  Future<AssignmentNote?> addNote(int assignmentId, String content) async {
+    try {
+      final body = {'content': content};
+      final response = await apiClient.post(ApiConfig.assignmentNotes(assignmentId), body: body);
+
+      if (response != null && response['data'] != null) {
+        final createdNote = AssignmentNote.fromJson(response['data'] as Map<String, dynamic>);
+
+        if (_selectedAssignment?.id == assignmentId) {
+          final updatedNotes = [createdNote, ..._selectedAssignment!.notes];
+          _selectedAssignment = _selectedAssignment!.copyWith(notes: updatedNotes);
+
+          // Also update list if cached
+          final idx = _assignments.indexWhere((a) => a.id == assignmentId);
+          if (idx != -1) {
+            _assignments[idx] = _assignments[idx].copyWith(notes: updatedNotes);
+          }
+          notifyListeners();
+        }
+        return createdNote;
+      }
+      return null;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return null;
+    } catch (_) {
+      _errorMessage = 'Failed to add note.';
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Update an existing note
+  Future<AssignmentNote?> updateNote(int assignmentId, int noteId, String content) async {
+    try {
+      final body = {'content': content};
+      final response = await apiClient.put(
+        ApiConfig.assignmentNoteDetail(assignmentId, noteId),
+        body: body,
+      );
+
+      if (response != null && response['data'] != null) {
+        final updatedNote = AssignmentNote.fromJson(response['data'] as Map<String, dynamic>);
+
+        if (_selectedAssignment?.id == assignmentId) {
+          final updatedNotes = _selectedAssignment!.notes.map((n) {
+            return n.id == noteId ? updatedNote : n;
+          }).toList();
+          _selectedAssignment = _selectedAssignment!.copyWith(notes: updatedNotes);
+
+          final idx = _assignments.indexWhere((a) => a.id == assignmentId);
+          if (idx != -1) {
+            _assignments[idx] = _assignments[idx].copyWith(notes: updatedNotes);
+          }
+          notifyListeners();
+        }
+        return updatedNote;
+      }
+      return null;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return null;
+    } catch (_) {
+      _errorMessage = 'Failed to update note.';
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Delete a note
+  Future<bool> deleteNote(int assignmentId, int noteId) async {
+    try {
+      await apiClient.delete(ApiConfig.assignmentNoteDetail(assignmentId, noteId));
+
+      if (_selectedAssignment?.id == assignmentId) {
+        final updatedNotes = _selectedAssignment!.notes.where((n) => n.id != noteId).toList();
+        _selectedAssignment = _selectedAssignment!.copyWith(notes: updatedNotes);
+
+        final idx = _assignments.indexWhere((a) => a.id == assignmentId);
+        if (idx != -1) {
+          _assignments[idx] = _assignments[idx].copyWith(notes: updatedNotes);
+        }
+        notifyListeners();
+      }
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _errorMessage = 'Failed to delete note.';
+      notifyListeners();
+      return false;
     }
   }
 }

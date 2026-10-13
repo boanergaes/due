@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:due_mobile/main.dart';
 import 'package:due_mobile/models/assignment.dart';
+import 'package:due_mobile/models/assignment_note.dart';
 import 'package:due_mobile/models/course_class.dart';
 import 'package:due_mobile/models/course_workload.dart';
 import 'package:due_mobile/models/dashboard_metrics.dart';
@@ -14,6 +15,7 @@ import 'package:due_mobile/providers/theme_provider.dart';
 import 'package:due_mobile/screens/assignments/assignment_detail_screen.dart';
 import 'package:due_mobile/screens/assignments/assignment_form_screen.dart';
 import 'package:due_mobile/screens/assignments/assignments_list_screen.dart';
+import 'package:due_mobile/screens/assignments/note_form_dialog.dart';
 import 'package:due_mobile/screens/auth/register_screen.dart';
 import 'package:due_mobile/screens/courses/course_detail_screen.dart';
 import 'package:due_mobile/screens/courses/courses_list_screen.dart';
@@ -657,5 +659,122 @@ void main() {
     await tester.pump();
 
     expect(find.text('Assignment title is required'), findsOneWidget);
+  });
+
+  testWidgets('AssignmentDetailScreen embeds notes list and triggers note creation dialog', (WidgetTester tester) async {
+    final tokenStorage = TokenStorage(inMemoryOnly: true);
+    final apiClient = ApiClient(tokenStorage: tokenStorage);
+    final themeProvider = ThemeProvider();
+
+    final testNote1 = AssignmentNote(
+      id: 11,
+      assignmentId: 303,
+      content: 'Refer to chapter 5 regarding Paxos state machine replication.',
+      createdAt: DateTime.now().subtract(const Duration(hours: 4)),
+    );
+
+    final testNote2 = AssignmentNote(
+      id: 12,
+      assignmentId: 303,
+      content: 'Edge case: handles partition across majority nodes.',
+      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+    );
+
+    final testAssignment = Assignment(
+      id: 303,
+      classId: 1,
+      title: 'Distributed Systems Raft Consensus Lab',
+      status: 'pending',
+      deadline: DateTime.now().add(const Duration(days: 5)),
+      urgency: {'label': 'UPCOMING', 'color': 'gray', 'is_overdue': false},
+      notes: [testNote1, testNote2],
+    );
+
+    final assignmentProvider = AssignmentProvider(
+      apiClient: apiClient,
+      initialSelectedAssignment: testAssignment,
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: themeProvider),
+          ChangeNotifierProvider.value(value: assignmentProvider),
+        ],
+        child: MaterialApp(
+          home: AssignmentDetailScreen(
+            assignmentId: 303,
+            initialAssignment: testAssignment,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    // Verify Notes Header and Notes count
+    expect(find.text('COURSEWORK NOTES (2)'), findsOneWidget);
+    expect(find.text('ADD NOTE'), findsOneWidget);
+
+    // Verify Notes Content
+    expect(find.text('Refer to chapter 5 regarding Paxos state machine replication.'), findsOneWidget);
+    expect(find.text('Edge case: handles partition across majority nodes.'), findsOneWidget);
+
+    // Tap ADD NOTE button to trigger modal
+    await tester.tap(find.text('ADD NOTE'));
+    await tester.pumpAndSettle();
+
+    // Verify Modal Dialog is displayed
+    expect(find.text('NEW STUDY NOTE'), findsOneWidget);
+    expect(find.text('NOTE CONTENT'), findsOneWidget);
+    expect(find.text('SAVE'), findsOneWidget);
+
+    // Tap Cancel
+    await tester.tap(find.text('CANCEL'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('NEW STUDY NOTE'), findsNothing);
+  });
+
+  testWidgets('NoteFormDialog validates required content and supports editing', (WidgetTester tester) async {
+    final existingNote = AssignmentNote(
+      id: 25,
+      assignmentId: 303,
+      content: 'Verify edge cases in Byzantine fault tolerance.',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  NoteFormDialog.show(context, note: existingNote);
+                },
+                child: const Text('OPEN DIALOG'),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    await tester.tap(find.text('OPEN DIALOG'));
+    await tester.pumpAndSettle();
+
+    // Verify Edit Mode Title and Pre-filled Content
+    expect(find.text('EDIT STUDY NOTE'), findsOneWidget);
+    expect(find.text('Verify edge cases in Byzantine fault tolerance.'), findsOneWidget);
+    expect(find.text('UPDATE'), findsOneWidget);
+
+    // Clear content and tap UPDATE to test validation
+    await tester.enterText(find.byType(TextFormField), '');
+    await tester.tap(find.text('UPDATE'));
+    await tester.pump();
+
+    expect(find.text('Note content cannot be empty'), findsOneWidget);
   });
 }

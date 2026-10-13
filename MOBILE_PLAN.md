@@ -312,10 +312,10 @@ mobile/
 ### **Phase M7: Assignment Notes CRUD**
 *Goal: Quick study notes and reminders attached to coursework.*
 
-- [ ] Embed notes list inside `AssignmentDetailScreen`.
-- [ ] Build modal dialog to add new notes and edit existing notes.
-- [ ] Build delete note action with confirmation dialog.
-- [ ] Verify instant reactive update of notes in state.
+- [x] Embed notes list inside `AssignmentDetailScreen`.
+- [x] Build modal dialog to add new notes and edit existing notes.
+- [x] Build delete note action with confirmation dialog.
+- [x] Verify instant reactive update of notes in state.
 
 ---
 
