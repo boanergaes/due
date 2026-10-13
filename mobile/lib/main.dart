@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/dashboard_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/main_navigation_screen.dart';
 import 'screens/splash_screen.dart';
 import 'services/api_client.dart';
 import 'services/token_storage.dart';
@@ -37,6 +39,9 @@ void main() {
                 themeProvider: themeProvider,
               ),
         ),
+        ChangeNotifierProvider(
+          create: (_) => DashboardProvider(apiClient: apiClient),
+        ),
       ],
       child: const DueApp(),
     ),
@@ -61,7 +66,7 @@ class DueApp extends StatelessWidget {
   }
 }
 
-/// Reactive Auth Gate directing user to Splash, Login, or Authenticated Home
+/// Reactive Auth Gate directing user to Splash, Login, or Main Navigation
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -78,9 +83,9 @@ class AuthGate extends StatelessWidget {
         if (authProvider.user == null) {
           return const LoginScreen();
         }
-        return const AuthenticatedHomeScreen();
+        return const MainNavigationScreen();
       case AuthStatus.authenticated:
-        return const AuthenticatedHomeScreen();
+        return const MainNavigationScreen();
     }
   }
 }

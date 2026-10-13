@@ -278,11 +278,12 @@ mobile/
 ### **Phase M4: Dashboard & Urgency Metrics**
 *Goal: Instant mobile overview of coursework and impending deadlines.*
 
-- [ ] Implement `DashboardProvider` fetching `GET /api/v1/dashboard`.
-- [ ] Build 2-column numerical `MetricCard` grid (Total, Pending, In Progress, Completed, Overdue).
-- [ ] Build overdue alert banner displaying when overdue assignments need attention.
-- [ ] Build upcoming deadlines feed showing course, formatted due date, urgency badge, and quick one-tap status completion.
-- [ ] Add pull-to-refresh functionality on the dashboard.
+- [x] Implement `DashboardProvider` fetching `GET /api/v1/dashboard`.
+- [x] Build 2-column numerical `MetricCard` grid (Total, Pending, In Progress, Completed, Overdue).
+- [x] Build overdue alert banner displaying when overdue assignments need attention.
+- [x] Build upcoming deadlines feed showing course, formatted due date, urgency badge, and quick one-tap status completion.
+- [x] Add pull-to-refresh functionality on the dashboard.
+- [x] Verified with `flutter analyze` (0 issues) and `flutter test` (all 7 tests passed).
 
 ---
 

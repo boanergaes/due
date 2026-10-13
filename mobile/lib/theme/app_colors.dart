@@ -14,9 +14,11 @@ class AppColors {
   // Light Palette
   static const Color lightBackground = Color(0xFFFFFFFF);
   static const Color lightSurface = Color(0xFFF4F4F5); // Zinc 100
+  static const Color lightSurfaceHover = Color(0xFFE4E4E7); // Zinc 200
   static const Color lightBorder = Color(0xFFE4E4E7); // Zinc 200
   static const Color lightTextPrimary = Color(0xFF09090B); // Zinc 950
   static const Color lightTextSecondary = Color(0xFF52525B); // Zinc 600
+  static const Color lightTextMuted = Color(0xFFA1A1AA); // Zinc 400
 
   // Due Brand Coral Accent (Official Laravel red)
   static const Color coral = Color(0xFFFF2D20);
