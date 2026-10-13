@@ -106,3 +106,21 @@ export interface DashboardPageProps {
     workload_by_class: ClassWorkload[];
 }
 
+export type SubscriptionTier = 'free' | 'basic' | 'premium';
+export type SubscriptionStatus = 'active' | 'cancelled' | 'past_due';
+
+export interface Subscription {
+    id: number;
+    user_id: number;
+    tier: SubscriptionTier;
+    status: SubscriptionStatus;
+    price: number;
+    interval: 'monthly' | 'annual';
+    card_brand: string;
+    card_last_four: string;
+    mock_transaction_id?: string;
+    starts_at: string;
+    ends_at: string | null;
+}
+
+

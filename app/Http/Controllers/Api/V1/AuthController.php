@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\SubscriptionTier;
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\SubscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -31,15 +34,20 @@ class AuthController extends Controller
         }
 
         $deviceName = $validated['device_name'] ?? 'due_mobile_client';
-        $token = $user->createToken($deviceName)->plainTextToken;
+        $subscriptionService = app(SubscriptionService::class);
+        $abilities = $subscriptionService->getSanctumAbilities($user);
+        $token = $user->createToken($deviceName, $abilities)->plainTextToken;
 
         return response()->json([
             'message' => 'Authenticated successfully',
             'token' => $token,
+            'abilities' => $abilities,
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'role' => $user->role->value,
+                'subscription_tier' => $user->subscription_tier->value,
                 'appearance' => $user->appearance ?? 'dark',
                 'created_at' => $user->created_at?->toISOString(),
             ],
@@ -63,19 +71,26 @@ class AuthController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'appearance' => 'dark',
+            'role' => UserRole::Student,
+            'subscription_tier' => SubscriptionTier::Free,
             'email_verified_at' => now(), // Option A: auto-verified
         ]);
 
         $deviceName = $validated['device_name'] ?? 'due_mobile_client';
-        $token = $user->createToken($deviceName)->plainTextToken;
+        $subscriptionService = app(SubscriptionService::class);
+        $abilities = $subscriptionService->getSanctumAbilities($user);
+        $token = $user->createToken($deviceName, $abilities)->plainTextToken;
 
         return response()->json([
             'message' => 'Account registered successfully',
             'token' => $token,
+            'abilities' => $abilities,
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'role' => $user->role->value,
+                'subscription_tier' => $user->subscription_tier->value,
                 'appearance' => $user->appearance,
                 'created_at' => $user->created_at?->toISOString(),
             ],

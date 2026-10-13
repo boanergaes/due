@@ -5,14 +5,30 @@ export type User = {
     avatar?: string;
     email_verified_at: string | null;
     appearance?: 'light' | 'dark' | 'system';
+    role?: 'student' | 'super_admin';
+    subscription_tier?: 'free' | 'basic' | 'premium';
+    subscription_expires_at?: string | null;
+    storage_used_bytes?: number;
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;
     [key: string]: unknown;
 };
 
+export type UserSubscriptionInfo = {
+    tier: 'free' | 'basic' | 'premium';
+    tier_label: string;
+    role: 'student' | 'super_admin';
+    is_super_admin: boolean;
+    features: string[];
+    storage_used_bytes: number;
+    storage_limit_bytes: number;
+    expires_at: string | null;
+};
+
 export type Auth = {
     user: User;
+    subscription?: UserSubscriptionInfo | null;
 };
 
 export type Passkey = {

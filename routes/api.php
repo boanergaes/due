@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AssignmentNoteApiController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CourseClassApiController;
 use App\Http\Controllers\Api\V1\DashboardApiController;
+use App\Http\Controllers\Api\V1\SubscriptionApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->as('api.v1.')->group(function () {
@@ -18,6 +19,11 @@ Route::prefix('v1')->as('api.v1.')->group(function () {
         Route::get('auth/user', [AuthController::class, 'user']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::patch('auth/appearance', [AuthController::class, 'updateAppearance']);
+
+        // Subscription, Abilities & Quota
+        Route::get('subscription', [SubscriptionApiController::class, 'index']);
+        Route::post('subscription/checkout', [SubscriptionApiController::class, 'checkout']);
+        Route::post('subscription/cancel', [SubscriptionApiController::class, 'cancel']);
 
         // Dashboard Metrics & Upcoming Feed
         Route::get('dashboard', [DashboardApiController::class, 'index']);

@@ -28,6 +28,11 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
     {
+        title: 'Subscription & Plan',
+        href: '/settings/subscription',
+        icon: null,
+    },
+    {
         title: 'Sessions & Devices',
         href: editSessions(),
         icon: null,
