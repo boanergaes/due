@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/splash_screen.dart';
 import 'services/api_client.dart';
 import 'services/token_storage.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
-import 'widgets/metric_card.dart';
-import 'widgets/urgency_badge.dart';
 import 'widgets/zero_button.dart';
 import 'widgets/zero_card.dart';
-import 'widgets/zero_text_field.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +23,20 @@ void main() {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         Provider<TokenStorage>.value(value: tokenStorage),
         Provider<ApiClient>.value(value: apiClient),
+        ChangeNotifierProxyProvider<ThemeProvider, AuthProvider>(
+          create: (context) => AuthProvider(
+            apiClient: apiClient,
+            tokenStorage: tokenStorage,
+            themeProvider: context.read<ThemeProvider>(),
+          ),
+          update: (context, themeProvider, auth) =>
+              auth ??
+              AuthProvider(
+                apiClient: apiClient,
+                tokenStorage: tokenStorage,
+                themeProvider: themeProvider,
+              ),
+        ),
       ],
       child: const DueApp(),
     ),
@@ -42,17 +56,45 @@ class DueApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
-      home: const ArchitectureCoreScreen(),
+      home: const AuthGate(),
     );
   }
 }
 
-/// Phase M2 Verification Screen demonstrating Due's zero-radius design tokens & components
-class ArchitectureCoreScreen extends StatelessWidget {
-  const ArchitectureCoreScreen({super.key});
+/// Reactive Auth Gate directing user to Splash, Login, or Authenticated Home
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
+    switch (authProvider.status) {
+      case AuthStatus.uninitialized:
+        return const SplashScreen();
+      case AuthStatus.unauthenticated:
+        return const LoginScreen();
+      case AuthStatus.authenticating:
+        if (authProvider.user == null) {
+          return const LoginScreen();
+        }
+        return const AuthenticatedHomeScreen();
+      case AuthStatus.authenticated:
+        return const AuthenticatedHomeScreen();
+    }
+  }
+}
+
+/// Authenticated Home View (Phase M3 Session Verification Screen)
+class AuthenticatedHomeScreen extends StatelessWidget {
+  const AuthenticatedHomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
+    final user = authProvider.user;
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -73,114 +115,129 @@ class ArchitectureCoreScreen extends StatelessWidget {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Toggle Theme',
+            icon: Icon(
+              themeProvider.isDarkMode
+                  ? Icons.light_mode_outlined
+                  : Icons.dark_mode_outlined,
+            ),
+            onPressed: () {
+              final nextTheme = themeProvider.isDarkMode ? 'light' : 'dark';
+              authProvider.updateAppearance(nextTheme);
+            },
+          ),
+          IconButton(
+            tooltip: 'Log out',
+            icon: const Icon(Icons.logout_outlined),
+            onPressed: () => authProvider.logout(),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Architectural Header
-            const Text(
-              'ARCHITECTURAL SYSTEM',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'monospace',
-                color: AppColors.coral,
-                letterSpacing: 1.5,
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Strict 0-Radius Mobile Core',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Metrics Grid
-            const Row(
-              children: [
-                Expanded(
-                  child: MetricCard(
-                    label: 'Pending',
-                    value: '12',
-                    icon: Icons.access_time,
-                    accentColor: AppColors.warning,
-                  ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: MetricCard(
-                    label: 'Overdue',
-                    value: '02',
-                    icon: Icons.warning_amber,
-                    accentColor: AppColors.danger,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Urgency Badges Showcase
-            const ZeroCard(
+            // User Greeting Card
+            ZeroCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'URGENCY PROTOCOLS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.darkTextSecondary,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                  SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  Row(
                     children: [
-                      UrgencyBadge(label: 'OVERDUE', isOverdue: true),
-                      UrgencyBadge(label: 'DUE TODAY'),
-                      UrgencyBadge(label: 'DUE SOON'),
-                      UrgencyBadge(label: 'UPCOMING'),
+                      Container(
+                        width: 42,
+                        height: 42,
+                        color: AppColors.coral,
+                        child: Center(
+                          child: Text(
+                            (user?.name.isNotEmpty ?? false)
+                                ? user!.name[0].toUpperCase()
+                                : 'U',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              user?.name ?? 'Student',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              user?.email ?? '',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.darkTextMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'SESSION STATUS',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'monospace',
+                          color: AppColors.darkTextSecondary,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withValues(alpha: 0.12),
+                          border: Border.all(
+                            color: AppColors.success.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: const Text(
+                          'ACTIVE (SANCTUM)',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontFamily: 'monospace',
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.success,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // Form Field Showcase
-            const ZeroTextField(
-              label: 'TEST INPUT',
-              hintText: 'Architectural sharp field...',
-            ),
-            const SizedBox(height: 20),
-
-            // Buttons Showcase
-            Row(
-              children: [
-                Expanded(
-                  child: ZeroButton(
-                    label: 'PRIMARY BUTTON',
-                    variant: ZeroButtonVariant.primary,
-                    onPressed: () {},
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ZeroButton(
-                    label: 'OUTLINE',
-                    variant: ZeroButtonVariant.outline,
-                    onPressed: () {},
-                  ),
-                ),
-              ],
+            // Logout Action
+            ZeroButton(
+              label: 'LOG OUT OF DUE',
+              variant: ZeroButtonVariant.outline,
+              onPressed: () => authProvider.logout(),
             ),
           ],
         ),

@@ -1,0 +1,228 @@
+import 'package:flutter/foundation.dart';
+import '../config/api_config.dart';
+import '../models/user.dart';
+import '../services/api_client.dart';
+import '../services/token_storage.dart';
+import 'theme_provider.dart';
+
+enum AuthStatus {
+  uninitialized,
+  authenticating,
+  authenticated,
+  unauthenticated,
+}
+
+class AuthProvider extends ChangeNotifier {
+  final ApiClient apiClient;
+  final TokenStorage tokenStorage;
+  final ThemeProvider? themeProvider;
+
+  AuthStatus _status = AuthStatus.uninitialized;
+  User? _user;
+  String? _errorMessage;
+
+  AuthProvider({
+    required this.apiClient,
+    required this.tokenStorage,
+    this.themeProvider,
+  }) {
+    apiClient.onUnauthenticated = _handleUnauthenticated;
+  }
+
+
+
+  AuthStatus get status => _status;
+  User? get user => _user;
+  String? get errorMessage => _errorMessage;
+  bool get isAuthenticated => _status == AuthStatus.authenticated;
+  bool get isLoading => _status == AuthStatus.authenticating;
+
+  void _handleUnauthenticated() {
+    _user = null;
+    _status = AuthStatus.unauthenticated;
+    _errorMessage = 'Session expired. Please log in again.';
+    notifyListeners();
+  }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  /// Check stored credentials on application boot
+  Future<void> checkAuth() async {
+    try {
+      final hasToken = await tokenStorage.hasToken();
+      if (!hasToken) {
+        _status = AuthStatus.unauthenticated;
+        notifyListeners();
+        return;
+      }
+
+      final response = await apiClient.get(ApiConfig.user);
+      if (response != null && response['user'] != null) {
+        _user = User.fromJson(response['user'] as Map<String, dynamic>);
+        _status = AuthStatus.authenticated;
+        _errorMessage = null;
+
+        // Apply theme from database user profile
+        if (_user != null && themeProvider != null) {
+          themeProvider!.setThemeMode(_user!.appearance);
+        }
+      } else {
+        await tokenStorage.deleteToken();
+        _status = AuthStatus.unauthenticated;
+      }
+    } catch (_) {
+      try {
+        await tokenStorage.deleteToken();
+      } catch (_) {}
+      _status = AuthStatus.unauthenticated;
+    }
+
+    notifyListeners();
+  }
+
+  /// Authenticate user credentials and save token
+  Future<bool> login({
+    required String email,
+    required String password,
+    String? deviceName,
+  }) async {
+    _status = AuthStatus.authenticating;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await apiClient.post(
+        ApiConfig.login,
+        body: {
+          'email': email,
+          'password': password,
+          'device_name': deviceName ?? 'Due Mobile',
+        },
+      );
+
+      final token = response['token'] as String;
+      await tokenStorage.saveToken(token);
+
+      _user = User.fromJson(response['user'] as Map<String, dynamic>);
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+
+      // Sync theme preference
+      if (themeProvider != null && _user != null) {
+        themeProvider!.setThemeMode(_user!.appearance);
+      }
+
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _status = AuthStatus.unauthenticated;
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _status = AuthStatus.unauthenticated;
+      _errorMessage = 'Unable to connect to server. Check your network.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Register a new account
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+    String? deviceName,
+  }) async {
+    _status = AuthStatus.authenticating;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await apiClient.post(
+        ApiConfig.register,
+        body: {
+          'name': name,
+          'email': email,
+          'password': password,
+          'password_confirmation': passwordConfirmation,
+          'device_name': deviceName ?? 'Due Mobile',
+        },
+      );
+
+      final token = response['token'] as String;
+      await tokenStorage.saveToken(token);
+
+      _user = User.fromJson(response['user'] as Map<String, dynamic>);
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+
+      if (themeProvider != null && _user != null) {
+        themeProvider!.setThemeMode(_user!.appearance);
+      }
+
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _status = AuthStatus.unauthenticated;
+      if (e.errors != null && e.errors!.isNotEmpty) {
+        final firstError = e.errors!.values.first;
+        if (firstError is List && firstError.isNotEmpty) {
+          _errorMessage = firstError.first.toString();
+        } else {
+          _errorMessage = e.message;
+        }
+      } else {
+        _errorMessage = e.message;
+      }
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _status = AuthStatus.unauthenticated;
+      _errorMessage = 'Unable to connect to server. Check your network.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Update appearance preference in database and sync theme
+  Future<void> updateAppearance(String appearance) async {
+    try {
+      await apiClient.patch(
+        ApiConfig.appearance,
+        body: {'appearance': appearance},
+      );
+
+      if (_user != null) {
+        _user = _user!.copyWith(appearance: appearance);
+      }
+
+      if (themeProvider != null) {
+        themeProvider!.setThemeMode(appearance);
+      }
+
+      notifyListeners();
+    } catch (_) {
+      // Ignored if offline
+    }
+  }
+
+  /// Log out and revoke personal access token
+  Future<void> logout() async {
+    try {
+      await apiClient.post(ApiConfig.logout);
+    } catch (_) {
+      // Swallowed on network disconnection
+    }
+
+    await tokenStorage.deleteToken();
+    _user = null;
+    _status = AuthStatus.unauthenticated;
+    _errorMessage = null;
+    notifyListeners();
+  }
+}

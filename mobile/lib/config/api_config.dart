@@ -15,13 +15,19 @@ class ApiConfig {
       return _customBaseUrl!;
     }
 
+    const envUrl = String.fromEnvironment('API_URL');
+    if (envUrl.isNotEmpty) {
+      return envUrl.endsWith('/') ? envUrl.substring(0, envUrl.length - 1) : envUrl;
+    }
+
     if (kIsWeb) {
       return 'http://127.0.0.1:8000/api/v1';
     }
 
     if (Platform.isAndroid) {
-      // 10.0.2.2 is the Android emulator loopback alias to host machine localhost
-      return 'http://10.0.2.2:8000/api/v1';
+      // With USB debugging, 'adb reverse tcp:8000 tcp:8000' routes 127.0.0.1:8000 directly to host PC.
+      // For emulators without adb reverse, launch with --dart-define=API_URL=http://10.0.2.2:8000/api/v1
+      return 'http://127.0.0.1:8000/api/v1';
     }
 
     // iOS Simulator, Linux desktop, macOS desktop

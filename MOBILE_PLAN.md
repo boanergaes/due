@@ -266,11 +266,12 @@ mobile/
 ### **Phase M3: Mobile Authentication & Session Flow**
 *Goal: Complete login, registration, and persistent sessions.*
 
-- [ ] Implement `AuthProvider` managing login status, user profile, and token lifecycle.
-- [ ] Create `SplashScreen` checking stored token and verifying session with `GET /api/v1/auth/user`.
-- [ ] Create `LoginScreen` with email and password inputs, validation errors, and loading state.
-- [ ] Create `RegisterScreen` with name, email, password, and password confirmation.
-- [ ] Add logout action that revokes the Sanctum token on the server and purges `TokenStorage`.
+- [x] Implement `AuthProvider` managing login status, user profile, and token lifecycle.
+- [x] Create `SplashScreen` checking stored token and verifying session with `GET /api/v1/auth/user`.
+- [x] Create `LoginScreen` with email and password inputs, validation errors, and loading state.
+- [x] Create `RegisterScreen` with name, email, password, and password confirmation.
+- [x] Add logout action that revokes the Sanctum token on the server and purges `TokenStorage`.
+- [x] Verified with `flutter analyze` (0 issues) and `flutter test` (all 4 tests passed).
 
 ---
 
