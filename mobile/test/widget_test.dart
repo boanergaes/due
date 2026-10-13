@@ -6,10 +6,14 @@ import 'package:due_mobile/models/assignment.dart';
 import 'package:due_mobile/models/course_class.dart';
 import 'package:due_mobile/models/course_workload.dart';
 import 'package:due_mobile/models/dashboard_metrics.dart';
+import 'package:due_mobile/providers/assignment_provider.dart';
 import 'package:due_mobile/providers/auth_provider.dart';
 import 'package:due_mobile/providers/course_provider.dart';
 import 'package:due_mobile/providers/dashboard_provider.dart';
 import 'package:due_mobile/providers/theme_provider.dart';
+import 'package:due_mobile/screens/assignments/assignment_detail_screen.dart';
+import 'package:due_mobile/screens/assignments/assignment_form_screen.dart';
+import 'package:due_mobile/screens/assignments/assignments_list_screen.dart';
 import 'package:due_mobile/screens/auth/register_screen.dart';
 import 'package:due_mobile/screens/courses/course_detail_screen.dart';
 import 'package:due_mobile/screens/courses/courses_list_screen.dart';
@@ -302,6 +306,7 @@ void main() {
     );
     final dashboardProvider = DashboardProvider(apiClient: apiClient);
     final courseProvider = CourseProvider(apiClient: apiClient);
+    final assignmentProvider = AssignmentProvider(apiClient: apiClient);
 
     await tester.pumpWidget(
       MultiProvider(
@@ -310,6 +315,7 @@ void main() {
           ChangeNotifierProvider.value(value: authProvider),
           ChangeNotifierProvider.value(value: dashboardProvider),
           ChangeNotifierProvider.value(value: courseProvider),
+          ChangeNotifierProvider.value(value: assignmentProvider),
         ],
         child: const MaterialApp(
           home: MainNavigationScreen(),
@@ -475,5 +481,181 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Deletion Safeguard'), findsNothing);
+  });
+
+  testWidgets('AssignmentsListScreen renders filter tabs, search bar, and assignment cards', (WidgetTester tester) async {
+    final tokenStorage = TokenStorage(inMemoryOnly: true);
+    final apiClient = ApiClient(tokenStorage: tokenStorage);
+    final themeProvider = ThemeProvider();
+
+    final testCourse = CourseClass(
+      id: 5,
+      courseName: 'Computer Networks',
+      creditHours: 3.0,
+      ects: 5.0,
+    );
+
+    final testAssignment = Assignment(
+      id: 101,
+      classId: 5,
+      title: 'TCP Reno Congestion Control Analysis',
+      description: 'Implement simulation in ns-3 and report throughput graphs.',
+      status: 'pending',
+      deadline: DateTime.now().add(const Duration(days: 4)),
+      urgency: {'label': 'UPCOMING', 'color': 'gray', 'is_overdue': false},
+      courseClass: testCourse,
+    );
+
+    final courseProvider = CourseProvider(
+      apiClient: apiClient,
+      initialCourses: [testCourse],
+    );
+
+    final assignmentProvider = AssignmentProvider(
+      apiClient: apiClient,
+      initialAssignments: [testAssignment],
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: themeProvider),
+          ChangeNotifierProvider.value(value: courseProvider),
+          ChangeNotifierProvider.value(value: assignmentProvider),
+        ],
+        child: const MaterialApp(
+          home: AssignmentsListScreen(),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    // Verify Title and Subtitle
+    expect(find.text('ASSIGNMENTS'), findsOneWidget);
+    expect(find.text('1 TASK LISTED'), findsOneWidget);
+    expect(find.text('NEW'), findsOneWidget);
+
+    // Verify Status Filter Tabs
+    expect(find.text('ALL'), findsOneWidget);
+    expect(find.text('PENDING'), findsAtLeast(1));
+    expect(find.text('IN PROGRESS'), findsOneWidget);
+    expect(find.text('COMPLETED'), findsOneWidget);
+
+    // Verify Assignment Card Details
+    expect(find.text('TCP Reno Congestion Control Analysis'), findsOneWidget);
+    expect(find.text('Computer Networks'), findsAtLeast(1));
+    expect(find.text('UPCOMING'), findsOneWidget);
+  });
+
+  testWidgets('AssignmentDetailScreen renders deadline countdown, status segment, and full description', (WidgetTester tester) async {
+    final tokenStorage = TokenStorage(inMemoryOnly: true);
+    final apiClient = ApiClient(tokenStorage: tokenStorage);
+    final themeProvider = ThemeProvider();
+
+    final testCourse = CourseClass(
+      id: 7,
+      courseName: 'Database Internals',
+      teacherName: 'Dr. Michael Stonebraker',
+    );
+
+    final testAssignment = Assignment(
+      id: 202,
+      classId: 7,
+      title: 'B+ Tree Concurrency & Latching',
+      description: 'Implement lock coupling and crabbing for leaf page insertions.',
+      status: 'in_progress',
+      deadline: DateTime.now().add(const Duration(days: 1)),
+      urgency: {'label': 'DUE SOON', 'color': 'yellow', 'is_overdue': false},
+      courseClass: testCourse,
+    );
+
+    final assignmentProvider = AssignmentProvider(
+      apiClient: apiClient,
+      initialSelectedAssignment: testAssignment,
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: themeProvider),
+          ChangeNotifierProvider.value(value: assignmentProvider),
+        ],
+        child: MaterialApp(
+          home: AssignmentDetailScreen(
+            assignmentId: 202,
+            initialAssignment: testAssignment,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    // Header & Title
+    expect(find.text('ASSIGNMENT DETAIL'), findsOneWidget);
+    expect(find.text('B+ Tree Concurrency & Latching'), findsOneWidget);
+    expect(find.text('Database Internals'), findsOneWidget);
+    expect(find.text('Dr. Michael Stonebraker'), findsOneWidget);
+
+    // Urgency & Status
+    expect(find.text('ACTIVE DEADLINE: DUE SOON'), findsOneWidget);
+    expect(find.text('STATUS WORKFLOW'), findsOneWidget);
+    expect(find.text('PENDING'), findsOneWidget);
+    expect(find.text('IN PROGRESS'), findsOneWidget);
+    expect(find.text('COMPLETED'), findsOneWidget);
+
+    // Description & Schedule
+    expect(find.text('Implement lock coupling and crabbing for leaf page insertions.'), findsOneWidget);
+    expect(find.text('SCHEDULE & DEADLINE'), findsOneWidget);
+  });
+
+  testWidgets('AssignmentFormScreen displays course dropdown, inputs, and validates required title', (WidgetTester tester) async {
+    final tokenStorage = TokenStorage(inMemoryOnly: true);
+    final apiClient = ApiClient(tokenStorage: tokenStorage);
+    final themeProvider = ThemeProvider();
+
+    final testCourse = CourseClass(
+      id: 9,
+      courseName: 'Cryptography & Security',
+    );
+
+    final courseProvider = CourseProvider(
+      apiClient: apiClient,
+      initialCourses: [testCourse],
+    );
+
+    final assignmentProvider = AssignmentProvider(
+      apiClient: apiClient,
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: themeProvider),
+          ChangeNotifierProvider.value(value: courseProvider),
+          ChangeNotifierProvider.value(value: assignmentProvider),
+        ],
+        child: const MaterialApp(
+          home: AssignmentFormScreen(preselectedClassId: 9),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    expect(find.text('NEW ASSIGNMENT'), findsOneWidget);
+    expect(find.text('COURSE CLASS'), findsOneWidget);
+    expect(find.text('ASSIGNMENT TITLE'), findsOneWidget);
+    expect(find.text('DESCRIPTION (OPTIONAL)'), findsOneWidget);
+    expect(find.text('STATUS'), findsOneWidget);
+    expect(find.text('DUE DATE & TIME'), findsOneWidget);
+    expect(find.text('CREATE ASSIGNMENT'), findsOneWidget);
+
+    // Tap submit with empty title to trigger validation
+    await tester.tap(find.text('CREATE ASSIGNMENT'));
+    await tester.pump();
+
+    expect(find.text('Assignment title is required'), findsOneWidget);
   });
 }

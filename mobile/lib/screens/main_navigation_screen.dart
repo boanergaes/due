@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/app_colors.dart';
-import '../widgets/empty_state.dart';
 import '../widgets/zero_button.dart';
 import '../widgets/zero_card.dart';
+import 'assignments/assignments_list_screen.dart';
 import 'courses/courses_list_screen.dart';
 import 'dashboard/dashboard_screen.dart';
 
@@ -43,11 +43,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         onNavigateToCourses: () => _onTabSelected(1),
       ),
       const CoursesListScreen(),
-      const _PlaceholderScreen(
-        title: 'ASSIGNMENTS DIRECTORY',
-        subtitle: 'Filter coursework by pending, in progress, and completed states.',
-        icon: Icons.assignment_outlined,
-      ),
+      const AssignmentsListScreen(),
       const _SettingsScreen(),
     ];
 
@@ -146,44 +142,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PlaceholderScreen extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-
-  const _PlaceholderScreen({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontFamily: 'monospace',
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
-          ),
-        ),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: EmptyState(
-            title: title,
-            message: subtitle,
-            icon: icon,
           ),
         ),
       ),

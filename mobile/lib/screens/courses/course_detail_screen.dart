@@ -8,6 +8,7 @@ import '../../widgets/confirm_dialog.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/urgency_badge.dart';
 import '../../widgets/zero_card.dart';
+import '../assignments/assignment_detail_screen.dart';
 import 'course_form_dialog.dart';
 
 class CourseDetailScreen extends StatefulWidget {
@@ -359,6 +360,19 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
                           return ZeroCard(
                             padding: const EdgeInsets.all(14),
+                            onTap: () async {
+                              await Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => AssignmentDetailScreen(
+                                    assignmentId: assignment.id,
+                                    initialAssignment: assignment,
+                                  ),
+                                ),
+                              );
+                              if (context.mounted) {
+                                context.read<CourseProvider>().fetchCourseDetail(widget.courseId);
+                              }
+                            },
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [

@@ -301,11 +301,11 @@ mobile/
 ### **Phase M6: Assignments, Filtering & Search**
 *Goal: Complete assignment workflow on the go.*
 
-- [ ] Implement `AssignmentProvider` with search querying, class filter, and status filter (`All`, `Pending`, `In Progress`, `Completed`).
-- [ ] Build `AssignmentsListScreen` with status tab selector, instant search bar, and assignment cards.
-- [ ] Build `AssignmentDetailScreen` displaying deadline countdown, full description, urgency badge, and course badge.
-- [ ] Implement inline status picker allowing immediate transition between Pending, In Progress, and Completed.
-- [ ] Build `AssignmentFormScreen` for creating and editing assignments with class selector and date picker.
+- [x] Implement `AssignmentProvider` with search querying, class filter, and status filter (`All`, `Pending`, `In Progress`, `Completed`).
+- [x] Build `AssignmentsListScreen` with status tab selector, instant search bar, and assignment cards.
+- [x] Build `AssignmentDetailScreen` displaying deadline countdown, full description, urgency badge, and course badge.
+- [x] Implement inline status picker allowing immediate transition between Pending, In Progress, and Completed.
+- [x] Build `AssignmentFormScreen` for creating and editing assignments with class selector and date picker.
 
 ---
 
