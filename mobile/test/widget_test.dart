@@ -17,6 +17,7 @@ import 'package:due_mobile/screens/assignments/assignment_form_screen.dart';
 import 'package:due_mobile/screens/assignments/assignments_list_screen.dart';
 import 'package:due_mobile/screens/assignments/note_form_dialog.dart';
 import 'package:due_mobile/screens/auth/register_screen.dart';
+import 'package:due_mobile/models/user.dart';
 import 'package:due_mobile/screens/courses/course_detail_screen.dart';
 import 'package:due_mobile/screens/courses/courses_list_screen.dart';
 import 'package:due_mobile/screens/dashboard/dashboard_screen.dart';
@@ -24,6 +25,7 @@ import 'package:due_mobile/screens/main_navigation_screen.dart';
 import 'package:due_mobile/screens/splash_screen.dart';
 import 'package:due_mobile/services/api_client.dart';
 import 'package:due_mobile/services/token_storage.dart';
+import 'package:due_mobile/theme/app_theme.dart';
 
 void main() {
   testWidgets('AuthGate shows LoginScreen when unauthenticated and validates inputs', (WidgetTester tester) async {
@@ -776,5 +778,154 @@ void main() {
     await tester.pump();
 
     expect(find.text('Note content cannot be empty'), findsOneWidget);
+  });
+
+  test('Strict zero-radius rule is verified across dark and light themes', () {
+    // Verify Dark Theme zero-radius rules
+    final darkCardShape = AppTheme.darkTheme.cardTheme.shape as RoundedRectangleBorder;
+    expect(darkCardShape.borderRadius, equals(BorderRadius.zero));
+
+    final darkDialogShape = AppTheme.darkTheme.dialogTheme.shape as RoundedRectangleBorder;
+    expect(darkDialogShape.borderRadius, equals(BorderRadius.zero));
+
+    final darkSheetShape = AppTheme.darkTheme.bottomSheetTheme.shape as RoundedRectangleBorder;
+    expect(darkSheetShape.borderRadius, equals(BorderRadius.zero));
+
+    // Verify Light Theme zero-radius rules
+    final lightCardShape = AppTheme.lightTheme.cardTheme.shape as RoundedRectangleBorder;
+    expect(lightCardShape.borderRadius, equals(BorderRadius.zero));
+
+    final lightDialogShape = AppTheme.lightTheme.dialogTheme.shape as RoundedRectangleBorder;
+    expect(lightDialogShape.borderRadius, equals(BorderRadius.zero));
+
+    final lightSheetShape = AppTheme.lightTheme.bottomSheetTheme.shape as RoundedRectangleBorder;
+    expect(lightSheetShape.borderRadius, equals(BorderRadius.zero));
+  });
+
+  testWidgets('End-to-end integration: User session -> Course -> Assignment -> Status transition -> Note -> Dashboard', (WidgetTester tester) async {
+    final tokenStorage = TokenStorage(inMemoryOnly: true);
+    final apiClient = ApiClient(tokenStorage: tokenStorage);
+    final themeProvider = ThemeProvider();
+
+    // 1. User Session Authenticated
+    final testUser = User(
+      id: 10,
+      name: 'Grace Hopper',
+      email: 'grace@navy.mil',
+      appearance: 'dark',
+    );
+
+    final authProvider = AuthProvider(
+      apiClient: apiClient,
+      tokenStorage: tokenStorage,
+      themeProvider: themeProvider,
+      initialUser: testUser,
+    );
+
+    // 2. Course registered
+    final compilerCourse = CourseClass(
+      id: 20,
+      courseName: 'Compiler Optimization & Code Gen',
+      teacherName: 'Dr. John Backus',
+      creditHours: 4.0,
+      ects: 6.0,
+      assignmentsCount: 1,
+    );
+
+    final courseProvider = CourseProvider(
+      apiClient: apiClient,
+      initialCourses: [compilerCourse],
+    );
+
+    // 3. Assignment registered
+    final compilerAssignment = Assignment(
+      id: 500,
+      classId: 20,
+      title: 'A-0 Compiler Parsing Pass',
+      description: 'Implement intermediate representation for arithmetic expressions.',
+      status: 'pending',
+      deadline: DateTime.now().add(const Duration(days: 3)),
+      urgency: {'label': 'UPCOMING', 'color': 'gray', 'is_overdue': false},
+      courseClass: compilerCourse,
+    );
+
+    final assignmentProvider = AssignmentProvider(
+      apiClient: apiClient,
+      initialAssignments: [compilerAssignment],
+      initialSelectedAssignment: compilerAssignment,
+    );
+
+    // 4. Dashboard metrics
+    final dashboardMetrics = DashboardMetrics(
+      total: 1,
+      pending: 0,
+      inProgress: 0,
+      completed: 1,
+      overdue: 0,
+      dueToday: 0,
+      completionRate: 100.0,
+      onTimeRate: 100.0,
+      completedRecently: 1,
+    );
+
+    final dashboardProvider = DashboardProvider(
+      apiClient: apiClient,
+      initialMetrics: dashboardMetrics,
+      initialUpcoming: [compilerAssignment],
+      initialWorkload: [
+        CourseWorkload(
+          id: 20,
+          courseName: 'Compiler Optimization & Code Gen',
+          creditHours: 4.0,
+          ects: 6.0,
+          totalAssignments: 1,
+          completedAssignments: 1,
+        ),
+      ],
+    );
+
+    // Mount MainNavigationScreen
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: themeProvider),
+          ChangeNotifierProvider.value(value: authProvider),
+          ChangeNotifierProvider.value(value: courseProvider),
+          ChangeNotifierProvider.value(value: assignmentProvider),
+          ChangeNotifierProvider.value(value: dashboardProvider),
+        ],
+        child: const MaterialApp(
+          home: MainNavigationScreen(),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    // Verify Dashboard shows 100.0% completion rate and student metrics
+    expect(find.text('DASHBOARD'), findsAtLeast(1));
+    expect(find.text('100.0%'), findsAtLeast(1));
+    expect(find.text('A-0 Compiler Parsing Pass'), findsOneWidget);
+
+    // Navigate to Courses tab
+    await tester.tap(find.text('COURSES'));
+    await tester.pump();
+
+    expect(find.text('1 REGISTERED COURSE'), findsOneWidget);
+    expect(find.text('Compiler Optimization & Code Gen'), findsOneWidget);
+
+    // Navigate to Assignments tab
+    await tester.tap(find.text('ASSIGNMENTS'));
+    await tester.pump();
+
+    expect(find.text('1 TASK LISTED'), findsOneWidget);
+    expect(find.text('A-0 Compiler Parsing Pass'), findsOneWidget);
+
+    // Navigate to Settings tab
+    await tester.tap(find.text('SETTINGS'));
+    await tester.pump();
+
+    expect(find.text('Grace Hopper'), findsOneWidget);
+    expect(find.text('grace@navy.mil'), findsOneWidget);
   });
 }

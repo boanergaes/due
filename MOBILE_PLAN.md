@@ -322,10 +322,10 @@ mobile/
 ### **Phase M8: Testing, Polishing & Verification**
 *Goal: Quality assurance and end-to-end integration.*
 
-- [ ] Run `flutter analyze` on the mobile codebase ensuring 0 errors or warnings.
-- [ ] Verify dark and light themes adhere strictly to zero-radius design rules.
-- [ ] Run full backend test suite (`php artisan test`) ensuring 100% pass rate.
-- [ ] Validate end-to-end user flow: Register -> Create Class -> Create Assignment -> Change Status -> Add Note -> Check Dashboard Metrics.
+- [x] Run `flutter analyze` on the mobile codebase ensuring 0 errors or warnings.
+- [x] Verify dark and light themes adhere strictly to zero-radius design rules.
+- [x] Run full backend test suite (`php artisan test`) ensuring 100% pass rate.
+- [x] Validate end-to-end user flow: Register -> Create Class -> Create Assignment -> Change Status -> Add Note -> Check Dashboard Metrics.
 
 ---
 

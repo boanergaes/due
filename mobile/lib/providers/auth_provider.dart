@@ -25,7 +25,10 @@ class AuthProvider extends ChangeNotifier {
     required this.apiClient,
     required this.tokenStorage,
     this.themeProvider,
-  }) {
+    User? initialUser,
+    AuthStatus? initialStatus,
+  })  : _user = initialUser,
+        _status = initialStatus ?? (initialUser != null ? AuthStatus.authenticated : AuthStatus.uninitialized) {
     apiClient.onUnauthenticated = _handleUnauthenticated;
   }
 
