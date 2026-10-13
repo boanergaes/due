@@ -1,8 +1,8 @@
 class CourseWorkload {
   final int id;
   final String courseName;
-  final int? creditHours;
-  final int? ects;
+  final double? creditHours;
+  final double? ects;
   final int totalAssignments;
   final int activeAssignments;
   final int completedAssignments;
@@ -24,8 +24,12 @@ class CourseWorkload {
     return CourseWorkload(
       id: json['id'] as int? ?? 0,
       courseName: json['course_name'] as String? ?? '',
-      creditHours: json['credit_hours'] as int?,
-      ects: json['ects'] as int?,
+      creditHours: (json['credit_hours'] != null)
+          ? double.tryParse(json['credit_hours'].toString())
+          : null,
+      ects: (json['ects'] != null)
+          ? double.tryParse(json['ects'].toString())
+          : null,
       totalAssignments: json['total_assignments'] as int? ?? 0,
       activeAssignments: json['active_assignments'] as int? ?? 0,
       completedAssignments: json['completed_assignments'] as int? ?? 0,

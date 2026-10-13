@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/course_provider.dart';
 import 'providers/dashboard_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/auth/login_screen.dart';
@@ -41,6 +42,9 @@ void main() {
         ),
         ChangeNotifierProvider(
           create: (_) => DashboardProvider(apiClient: apiClient),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CourseProvider(apiClient: apiClient),
         ),
       ],
       child: const DueApp(),

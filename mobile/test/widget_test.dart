@@ -7,9 +7,12 @@ import 'package:due_mobile/models/course_class.dart';
 import 'package:due_mobile/models/course_workload.dart';
 import 'package:due_mobile/models/dashboard_metrics.dart';
 import 'package:due_mobile/providers/auth_provider.dart';
+import 'package:due_mobile/providers/course_provider.dart';
 import 'package:due_mobile/providers/dashboard_provider.dart';
 import 'package:due_mobile/providers/theme_provider.dart';
 import 'package:due_mobile/screens/auth/register_screen.dart';
+import 'package:due_mobile/screens/courses/course_detail_screen.dart';
+import 'package:due_mobile/screens/courses/courses_list_screen.dart';
 import 'package:due_mobile/screens/dashboard/dashboard_screen.dart';
 import 'package:due_mobile/screens/main_navigation_screen.dart';
 import 'package:due_mobile/screens/splash_screen.dart';
@@ -238,7 +241,7 @@ void main() {
     expect(find.text('4'), findsOneWidget);  // Completed
 
     // Verify Course Workload details
-    expect(find.text('4 CH'), findsOneWidget);
+    expect(find.text('4.0 CH'), findsOneWidget);
     expect(find.text('100.0% ON-TIME'), findsOneWidget);
 
     // Verify Upcoming Assignment Feed & Course Badge
@@ -298,6 +301,7 @@ void main() {
       themeProvider: themeProvider,
     );
     final dashboardProvider = DashboardProvider(apiClient: apiClient);
+    final courseProvider = CourseProvider(apiClient: apiClient);
 
     await tester.pumpWidget(
       MultiProvider(
@@ -305,6 +309,7 @@ void main() {
           ChangeNotifierProvider.value(value: themeProvider),
           ChangeNotifierProvider.value(value: authProvider),
           ChangeNotifierProvider.value(value: dashboardProvider),
+          ChangeNotifierProvider.value(value: courseProvider),
         ],
         child: const MaterialApp(
           home: MainNavigationScreen(),
@@ -326,5 +331,149 @@ void main() {
 
     expect(find.text('APPEARANCE & THEME'), findsOneWidget);
     expect(find.text('LOG OUT OF DUE'), findsOneWidget);
+  });
+
+  testWidgets('CoursesListScreen renders courses list, CH/ECTS badges, and add course button', (WidgetTester tester) async {
+    final tokenStorage = TokenStorage(inMemoryOnly: true);
+    final apiClient = ApiClient(tokenStorage: tokenStorage);
+    final themeProvider = ThemeProvider();
+
+    final testCourse = CourseClass(
+      id: 1,
+      courseName: 'Distributed Systems',
+      teacherName: 'Dr. Leslie Lamport',
+      creditHours: 4,
+      ects: 6.0,
+      assignmentsCount: 3,
+    );
+
+    final courseProvider = CourseProvider(
+      apiClient: apiClient,
+      initialCourses: [testCourse],
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: themeProvider),
+          ChangeNotifierProvider.value(value: courseProvider),
+        ],
+        child: const MaterialApp(
+          home: CoursesListScreen(),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    expect(find.text('COURSES'), findsOneWidget);
+    expect(find.text('1 REGISTERED COURSE'), findsOneWidget);
+    expect(find.text('Distributed Systems'), findsOneWidget);
+    expect(find.text('Dr. Leslie Lamport'), findsOneWidget);
+    expect(find.text('4.0 CH'), findsOneWidget);
+    expect(find.text('6.0 ECTS'), findsOneWidget);
+    expect(find.text('3 TASKS'), findsOneWidget);
+    expect(find.text('NEW COURSE'), findsOneWidget);
+  });
+
+  testWidgets('CourseDetailScreen displays course info, credits, and linked coursework', (WidgetTester tester) async {
+    final tokenStorage = TokenStorage(inMemoryOnly: true);
+    final apiClient = ApiClient(tokenStorage: tokenStorage);
+    final themeProvider = ThemeProvider();
+
+    final testCourse = CourseClass(
+      id: 2,
+      courseName: 'Algorithms & Complexity',
+      teacherName: 'Prof. Donald Knuth',
+      teacherContact: 'knuth@cs.stanford.edu',
+      creditHours: 5,
+      ects: 7.5,
+      assignmentsCount: 1,
+    );
+
+    final testAssignment = Assignment(
+      id: 50,
+      classId: 2,
+      title: 'Dynamic Programming Problem Set',
+      status: 'pending',
+      deadline: DateTime.now().add(const Duration(days: 3)),
+      urgency: {'label': 'UPCOMING', 'color': 'gray', 'is_overdue': false},
+    );
+
+    final courseProvider = CourseProvider(
+      apiClient: apiClient,
+      initialSelectedCourse: testCourse,
+      initialAssignments: [testAssignment],
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: themeProvider),
+          ChangeNotifierProvider.value(value: courseProvider),
+        ],
+        child: const MaterialApp(
+          home: CourseDetailScreen(
+            courseId: 2,
+            courseName: 'Algorithms & Complexity',
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    expect(find.text('Algorithms & Complexity'), findsAtLeast(1));
+    expect(find.text('Prof. Donald Knuth'), findsOneWidget);
+    expect(find.text('knuth@cs.stanford.edu'), findsOneWidget);
+    expect(find.text('5.0 CH'), findsOneWidget);
+    expect(find.text('7.5 ECTS'), findsOneWidget);
+    expect(find.text('COURSE ASSIGNMENTS'), findsOneWidget);
+    expect(find.text('Dynamic Programming Problem Set'), findsOneWidget);
+  });
+
+  testWidgets('Deletion safeguard blocks deleting courses with existing assignments', (WidgetTester tester) async {
+    final tokenStorage = TokenStorage(inMemoryOnly: true);
+    final apiClient = ApiClient(tokenStorage: tokenStorage);
+    final themeProvider = ThemeProvider();
+
+    final courseWithAssignments = CourseClass(
+      id: 3,
+      courseName: 'Compiler Construction',
+      assignmentsCount: 2,
+    );
+
+    final courseProvider = CourseProvider(
+      apiClient: apiClient,
+      initialCourses: [courseWithAssignments],
+    );
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: themeProvider),
+          ChangeNotifierProvider.value(value: courseProvider),
+        ],
+        child: const MaterialApp(
+          home: CoursesListScreen(),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    // Tap delete button on course card
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+
+    // Safeguard dialog should be shown
+    expect(find.text('Deletion Safeguard'), findsOneWidget);
+    expect(find.text('UNDERSTOOD'), findsOneWidget);
+
+    // Tap UNDERSTOOD to dismiss
+    await tester.tap(find.text('UNDERSTOOD'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Deletion Safeguard'), findsNothing);
   });
 }

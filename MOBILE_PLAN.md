@@ -290,11 +290,11 @@ mobile/
 ### **Phase M5: Courses & Classes Management**
 *Goal: Academic subject tracking on mobile.*
 
-- [ ] Implement `CourseProvider` handling course listing and mutations.
-- [ ] Build `CoursesListScreen` showing credit hours (CH) and ECTS badges.
-- [ ] Build `CourseDetailScreen` showing course syllabus info and attached assignments.
-- [ ] Build `CourseFormDialog` for creating and editing classes.
-- [ ] Implement deletion safeguard with clear warning when assignments exist for the course.
+- [x] Implement `CourseProvider` handling course listing and mutations.
+- [x] Build `CoursesListScreen` showing credit hours (CH) and ECTS badges.
+- [x] Build `CourseDetailScreen` showing course syllabus info and attached assignments.
+- [x] Build `CourseFormDialog` for creating and editing classes.
+- [x] Implement deletion safeguard with clear warning when assignments exist for the course.
 
 ---
 

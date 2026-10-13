@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/zero_button.dart';
 import '../widgets/zero_card.dart';
+import 'courses/courses_list_screen.dart';
 import 'dashboard/dashboard_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -41,11 +42,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         onNavigateToAssignments: () => _onTabSelected(2),
         onNavigateToCourses: () => _onTabSelected(1),
       ),
-      const _PlaceholderScreen(
-        title: 'COURSES & CLASSES',
-        subtitle: 'Manage your enrolled courses, syllabus, and credit hours.',
-        icon: Icons.school_outlined,
-      ),
+      const CoursesListScreen(),
       const _PlaceholderScreen(
         title: 'ASSIGNMENTS DIRECTORY',
         subtitle: 'Filter coursework by pending, in progress, and completed states.',
