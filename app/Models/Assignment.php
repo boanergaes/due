@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -28,6 +30,9 @@ use Illuminate\Support\Carbon;
  * @property-read User $user
  * @property-read CourseClass $class
  * @property-read Collection<int, AssignmentNote> $notes
+ * @property-read Collection<int, \App\Models\Resource> $resources
+ * @property-read Collection<int, AiConversation> $aiConversations
+ * @property-read AiConversation|null $latestAiConversation
  */
 #[Fillable([
     'user_id',
@@ -142,5 +147,35 @@ class Assignment extends Model
     public function scopeCompleted(Builder $query): Builder
     {
         return $query->where('status', AssignmentStatus::Completed);
+    }
+
+    /**
+     * Study resources attached to this assignment.
+     *
+     * @return MorphMany<\App\Models\Resource, $this>
+     */
+    public function resources(): MorphMany
+    {
+        return $this->morphMany(Resource::class, 'resourceable')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * AI study conversations attached to this assignment.
+     *
+     * @return HasMany<AiConversation, $this>
+     */
+    public function aiConversations(): HasMany
+    {
+        return $this->hasMany(AiConversation::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * The most recent AI conversation for this assignment.
+     *
+     * @return HasOne<AiConversation, $this>
+     */
+    public function latestAiConversation(): HasOne
+    {
+        return $this->hasOne(AiConversation::class)->latestOfMany();
     }
 }

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -23,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read User $user
  * @property-read Collection<int, Assignment> $assignments
+ * @property-read Collection<int, \App\Models\Resource> $resources
  */
 #[Fillable([
     'user_id',
@@ -75,5 +77,15 @@ class CourseClass extends Model
     public function assignments(): HasMany
     {
         return $this->hasMany(Assignment::class, 'class_id');
+    }
+
+    /**
+     * The study resources attached to this class.
+     *
+     * @return MorphMany<\App\Models\Resource, $this>
+     */
+    public function resources(): MorphMany
+    {
+        return $this->morphMany(Resource::class, 'resourceable')->orderBy('created_at', 'desc');
     }
 }

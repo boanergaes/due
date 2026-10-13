@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\SubscriptionTier;
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -30,11 +32,47 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'appearance' => 'dark',
+            'role' => UserRole::Student,
+            'subscription_tier' => SubscriptionTier::Free,
+            'subscription_expires_at' => null,
+            'storage_used_bytes' => 0,
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ];
+    }
+
+    /**
+     * Indicate that the user is a Super Administrator.
+     */
+    public function superAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::SuperAdmin,
+        ]);
+    }
+
+    /**
+     * Indicate that the user has the Scholar (Basic) subscription tier.
+     */
+    public function scholar(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'subscription_tier' => SubscriptionTier::Basic,
+            'subscription_expires_at' => now()->addMonth(),
+        ]);
+    }
+
+    /**
+     * Indicate that the user has the Genius (Premium) subscription tier.
+     */
+    public function genius(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'subscription_tier' => SubscriptionTier::Premium,
+            'subscription_expires_at' => now()->addMonth(),
+        ]);
     }
 
     /**
