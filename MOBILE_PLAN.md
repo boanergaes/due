@@ -250,18 +250,16 @@ mobile/
 ### **Phase M2: Flutter Scaffold & Architectural Core**
 *Goal: Initialize Flutter project with Zero-Radius Design System and API networking.*
 
-- [ ] Scaffold Flutter app in `mobile/` using `flutter create --org com.due due_mobile`.
-- [ ] Configure `pubspec.yaml` with required packages:
-  - `http: ^1.2.0`
-  - `flutter_secure_storage: ^9.0.0`
-  - `provider: ^6.1.1`
-  - `intl: ^0.19.0`
-- [ ] Build `AppColors` and `AppTheme`:
+- [x] Scaffold Flutter app in `mobile/` using `flutter create --org com.due due_mobile`.
+- [x] Configure `pubspec.yaml` with required packages (`http`, `flutter_secure_storage`, `provider`, `intl`).
+- [x] Build `AppColors` and `AppTheme`:
   - Dark mode by default (`#09090B`).
-  - Strict zero radius on all widgets: `ElevatedButtonThemeData`, `OutlinedButtonThemeData`, `CardTheme`, `InputDecorationTheme`, `DialogTheme`.
+  - Strict zero radius on all widgets: `ElevatedButtonThemeData`, `OutlinedButtonThemeData`, `CardTheme`, `InputDecorationTheme`, `DialogTheme`, `BottomSheetThemeData`, `ChipThemeData`.
   - Monospace font styling for badges.
-- [ ] Implement `TokenStorage` with `flutter_secure_storage`.
-- [ ] Implement `ApiClient` with automatic Bearer token injection and global 401 unauthenticated redirect.
+- [x] Implement `TokenStorage` with `flutter_secure_storage`.
+- [x] Implement `ApiClient` with automatic Bearer token injection and global 401 unauthenticated redirect.
+- [x] Build core architectural widgets (`ZeroButton`, `ZeroCard`, `ZeroTextField`, `UrgencyBadge`, `MetricCard`, `EmptyState`, `ConfirmDialog`).
+- [x] Verified with `flutter analyze` (0 issues) and `flutter test` (all tests passed).
 
 ---
 
