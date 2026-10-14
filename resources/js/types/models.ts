@@ -25,6 +25,22 @@ export interface AssignmentNote {
     updated_at: string;
 }
 
+export interface StudyResource {
+    id: number;
+    user_id: number;
+    resourceable_type: string;
+    resourceable_id: number;
+    title: string;
+    file_name: string;
+    file_path: string;
+    mime_type: string;
+    file_size_bytes: number;
+    formatted_size?: string;
+    extracted_text?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface CourseClass {
     id: number;
     user_id: number;
@@ -37,6 +53,7 @@ export interface CourseClass {
     updated_at: string;
     assignments_count?: number;
     assignments?: Assignment[];
+    resources?: StudyResource[];
 }
 
 export interface Assignment {
@@ -53,6 +70,7 @@ export interface Assignment {
     course_class?: CourseClass;
     urgency?: UrgencyData;
     notes?: AssignmentNote[];
+    resources?: StudyResource[];
 }
 
 export interface PaginationLink {

@@ -25,6 +25,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { ResourceSection } from '@/components/resources/resource-section';
 import { UrgencyBadge } from '@/components/urgency-badge';
 import { dashboard } from '@/routes';
 import * as assignmentsRoutes from '@/routes/assignments';
@@ -410,6 +411,17 @@ export default function AssignmentsShow({ assignment }: PageProps) {
                             ))}
                         </div>
                     )}
+                </div>
+
+                {/* Assignment Study Resources */}
+                <div className="border border-border bg-card p-6 rounded-none">
+                    <ResourceSection
+                        resourceableType="assignment"
+                        resourceableId={assignment.id}
+                        resources={assignment.resources ?? []}
+                        title="Attached Study Resources"
+                        description="Upload assignment briefs, problem sets, rubrics, slide decks, or starter code."
+                    />
                 </div>
             </div>
 

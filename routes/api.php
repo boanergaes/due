@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AssignmentNoteApiController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CourseClassApiController;
 use App\Http\Controllers\Api\V1\DashboardApiController;
+use App\Http\Controllers\Api\V1\ResourceApiController;
 use App\Http\Controllers\Api\V1\SubscriptionApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -42,5 +43,14 @@ Route::prefix('v1')->as('api.v1.')->group(function () {
         Route::post('assignments/{assignment}/notes', [AssignmentNoteApiController::class, 'store']);
         Route::put('assignments/{assignment}/notes/{note}', [AssignmentNoteApiController::class, 'update']);
         Route::delete('assignments/{assignment}/notes/{note}', [AssignmentNoteApiController::class, 'destroy']);
+
+        // Study Resources (Mobile API)
+        Route::get('resources', [ResourceApiController::class, 'index']);
+        Route::post('resources', [ResourceApiController::class, 'store'])
+            ->middleware('subscription.feature:resources');
+        Route::get('resources/{resource}', [ResourceApiController::class, 'show']);
+        Route::get('resources/{resource}/view', [ResourceApiController::class, 'view']);
+        Route::get('resources/{resource}/download', [ResourceApiController::class, 'download']);
+        Route::delete('resources/{resource}', [ResourceApiController::class, 'destroy']);
     });
 });

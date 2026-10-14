@@ -4,6 +4,7 @@ use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\AssignmentNoteController;
 use App\Http\Controllers\CourseClassController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\SubscriptionController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +33,17 @@ Route::middleware(['auth'])->group(function () {
         ->name('assignments.notes.update');
     Route::delete('assignments/{assignment}/notes/{note}', [AssignmentNoteController::class, 'destroy'])
         ->name('assignments.notes.destroy');
+
+    // Study resources (upload requires basic/scholar tier or higher)
+    Route::post('resources/upload', [ResourceController::class, 'store'])
+        ->middleware('subscription.feature:resources')
+        ->name('resources.upload');
+    Route::get('resources/{resource}/view', [ResourceController::class, 'view'])
+        ->name('resources.view');
+    Route::get('resources/{resource}/download', [ResourceController::class, 'download'])
+        ->name('resources.download');
+    Route::delete('resources/{resource}', [ResourceController::class, 'destroy'])
+        ->name('resources.destroy');
 });
 
 require __DIR__.'/settings.php';

@@ -80,6 +80,18 @@ enum SubscriptionTier: string
     }
 
     /**
+     * Max single file upload size in megabytes.
+     */
+    public function maxFileSizeMb(): int
+    {
+        return match ($this) {
+            self::Free => 0,
+            self::Basic => 25,
+            self::Premium => 100,
+        };
+    }
+
+    /**
      * Max single file upload size in bytes.
      */
     public function maxFileSizeBytes(): int

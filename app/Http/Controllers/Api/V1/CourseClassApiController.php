@@ -58,6 +58,7 @@ class CourseClassApiController extends Controller
         $courseClass->loadCount('assignments');
         $courseClass->load([
             'assignments' => fn ($query) => $query->orderBy('deadline'),
+            'resources' => fn ($query) => $query->orderBy('created_at', 'desc'),
         ]);
 
         return response()->json([

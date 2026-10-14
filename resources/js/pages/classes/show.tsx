@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ResourceSection } from '@/components/resources/resource-section';
 import {
     Dialog,
     DialogContent,
@@ -235,6 +236,17 @@ export default function ClassesShow({ courseClass, errors }: PageProps) {
                             ))}
                         </div>
                     )}
+                </div>
+
+                {/* Course Study Resources */}
+                <div className="border border-border bg-card p-5">
+                    <ResourceSection
+                        resourceableType="class"
+                        resourceableId={courseClass.id}
+                        resources={courseClass.resources ?? []}
+                        title="Course Resources & Materials"
+                        description="Upload syllabi, lecture slides, textbooks, and review papers for this class."
+                    />
                 </div>
             </div>
 

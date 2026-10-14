@@ -142,6 +142,7 @@ class AssignmentController extends Controller
         $assignment->load([
             'courseClass',
             'notes' => fn ($query) => $query->latest(),
+            'resources' => fn ($query) => $query->orderBy('created_at', 'desc'),
         ]);
 
         return Inertia::render('assignments/show', [

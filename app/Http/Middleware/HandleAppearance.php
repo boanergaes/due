@@ -24,7 +24,12 @@ class HandleAppearance
 
         // Synchronize cookie with the authenticated user's persisted database preference
         if ($request->user() && $request->cookie('appearance') !== $request->user()->appearance) {
-            $response->cookie(cookie()->forever('appearance', $request->user()->appearance));
+            $appearanceCookie = cookie()->forever('appearance', $request->user()->appearance);
+            if (method_exists($response, 'cookie')) {
+                $response->cookie($appearanceCookie);
+            } else {
+                $response->headers->setCookie($appearanceCookie);
+            }
         }
 
         return $response;

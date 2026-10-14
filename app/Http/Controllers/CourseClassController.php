@@ -56,6 +56,7 @@ class CourseClassController extends Controller
 
         $courseClass->load([
             'assignments' => fn ($query) => $query->orderBy('deadline'),
+            'resources' => fn ($query) => $query->orderBy('created_at', 'desc'),
         ]);
 
         return Inertia::render('classes/show', [
