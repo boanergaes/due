@@ -1,16 +1,11 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import {
+    ArrowLeft,
     ArrowRight,
     Check,
-    CreditCard,
-    FileText,
-    HelpCircle,
-    ShieldCheck,
-    Sparkles,
     Zap,
 } from 'lucide-react';
-import AppLogoIcon from '@/components/app-logo-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,51 +33,41 @@ export default function Pricing({ currentTier, isSuperAdmin, tiers }: PricingPro
     const { auth } = usePage<{ auth: { user: { id: number; name: string } | null } }>().props;
     const [interval, setInterval] = useState<'monthly' | 'annual'>('monthly');
 
+    const handleBack = () => {
+        if (typeof window !== 'undefined') {
+            const referrer = document.referrer;
+            const isFromSameOrigin = referrer && referrer.startsWith(window.location.origin);
+            const isFromRegister = referrer && referrer.includes('/register');
+
+            if (isFromSameOrigin && !isFromRegister && window.history.length > 1) {
+                window.history.back();
+                return;
+            }
+        }
+
+        router.visit(auth?.user ? '/dashboard' : '/');
+    };
+
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-primary selection:text-primary-foreground font-sans">
             <Head title="Plans & Pricing — Due" />
 
-            {/* Top architectural border accent */}
-            <div className="h-1 w-full bg-primary" />
-
-            {/* Navigation Header */}
-            <header className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-3 group">
-                        <div className="size-8 bg-primary text-primary-foreground flex items-center justify-center rounded-none shadow-xs group-hover:opacity-90 transition-opacity">
-                            <AppLogoIcon className="size-5" />
-                        </div>
-                        <span className="font-semibold text-lg tracking-tight flex items-center">
-                            due<span className="text-primary font-bold">.</span>
-                        </span>
-                    </Link>
-
-                    <nav className="flex items-center gap-3">
-                        {auth.user ? (
-                            <>
-                                <Button asChild variant="ghost" size="sm" className="rounded-none">
-                                    <Link href="/dashboard">Dashboard</Link>
-                                </Button>
-                                <Button asChild variant="outline" size="sm" className="rounded-none border-border">
-                                    <Link href="/settings/subscription">My Plan</Link>
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                <Button asChild variant="ghost" size="sm" className="rounded-none">
-                                    <Link href="/login">Log in</Link>
-                                </Button>
-                                <Button asChild variant="default" size="sm" className="rounded-none">
-                                    <Link href="/register">Get Started</Link>
-                                </Button>
-                            </>
-                        )}
-                    </nav>
-                </div>
-            </header>
+            {/* Back Navigation (Non-primary styling) */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 w-full">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBack}
+                    className="rounded-none border-border text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer font-mono text-xs inline-flex items-center gap-2 shadow-xs"
+                >
+                    <ArrowLeft className="size-3.5" />
+                    <span>Back</span>
+                </Button>
+            </div>
 
             {/* Hero Section */}
-            <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full">
+            <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20 w-full">
                 <div className="text-center max-w-3xl mx-auto space-y-4 mb-12">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-muted border border-border text-xs font-mono tracking-wider uppercase text-muted-foreground">
                         <Zap className="size-3.5 text-primary" />
@@ -204,20 +189,32 @@ export default function Pricing({ currentTier, isSuperAdmin, tiers }: PricingPro
 
                                 <CardFooter className="pt-6 border-t border-border">
                                     {isCurrent ? (
-                                        <Button
-                                            disabled
-                                            className="w-full rounded-none bg-muted text-muted-foreground cursor-not-allowed"
-                                        >
-                                            Current Active Plan
-                                        </Button>
+                                        tier.key === 'free' ? (
+                                            <Button
+                                                asChild
+                                                variant="outline"
+                                                className="w-full rounded-none border-border hover:bg-muted"
+                                            >
+                                                <Link href="/dashboard">
+                                                    Continue with Free Plan
+                                                </Link>
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                disabled
+                                                className="w-full rounded-none bg-muted text-muted-foreground cursor-not-allowed"
+                                            >
+                                                Current Active Plan
+                                            </Button>
+                                        )
                                     ) : tier.key === 'free' ? (
                                         <Button
                                             asChild
                                             variant="outline"
                                             className="w-full rounded-none border-border hover:bg-muted"
                                         >
-                                            <Link href={auth.user ? '/dashboard' : '/register'}>
-                                                {auth.user ? 'Continue Free' : 'Get Started Free'}
+                                            <Link href={auth?.user ? '/dashboard' : '/register'}>
+                                                {auth?.user ? 'Continue Free' : 'Get Started Free'}
                                             </Link>
                                         </Button>
                                     ) : (
@@ -228,7 +225,7 @@ export default function Pricing({ currentTier, isSuperAdmin, tiers }: PricingPro
                                         >
                                             <Link
                                                 href={
-                                                    auth.user
+                                                    auth?.user
                                                         ? `/checkout?plan=${tier.key}&interval=${interval}`
                                                         : `/register?redirect=/checkout?plan=${tier.key}`
                                                 }
@@ -243,121 +240,7 @@ export default function Pricing({ currentTier, isSuperAdmin, tiers }: PricingPro
                         );
                     })}
                 </div>
-
-                {/* Simulated Payment Notice Banner */}
-                <div className="mt-16 border border-border bg-card p-6 rounded-none flex flex-col md:flex-row items-center gap-4 justify-between">
-                    <div className="flex items-start gap-3">
-                        <div className="size-10 bg-muted text-primary flex items-center justify-center shrink-0 border border-border">
-                            <CreditCard className="size-5" />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-sm">Simulated Sandbox Checkout</h3>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                                Real payment charges are mocked for learning and internship evaluation. You can enter mock card details to experience end-to-end tokenized subscription provisioning!
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <Badge variant="outline" className="rounded-none border-emerald-500/40 text-emerald-400 font-mono text-[11px] px-2.5 py-1">
-                            <ShieldCheck className="size-3.5 mr-1 text-emerald-400 inline" />
-                            Zero Risk Sandbox
-                        </Badge>
-                    </div>
-                </div>
-
-                {/* Feature Comparison Matrix */}
-                <div className="mt-20">
-                    <div className="text-center max-w-2xl mx-auto mb-10">
-                        <h2 className="text-2xl font-bold tracking-tight">Detailed Feature Breakdown</h2>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Everything you need to know about capabilities per tier.
-                        </p>
-                    </div>
-
-                    <div className="border border-border overflow-x-auto bg-card">
-                        <table className="w-full text-left text-xs border-collapse">
-                            <thead>
-                                <tr className="border-b border-border bg-muted/40 font-mono">
-                                    <th className="py-3 px-4 font-semibold">Capability</th>
-                                    <th className="py-3 px-4 font-semibold text-center">Free</th>
-                                    <th className="py-3 px-4 font-semibold text-center text-primary">Scholar</th>
-                                    <th className="py-3 px-4 font-semibold text-center text-primary">Genius</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                <tr>
-                                    <td className="py-3 px-4 font-medium">Courses & Assignment Tracking</td>
-                                    <td className="py-3 px-4 text-center font-mono text-emerald-400">Unlimited</td>
-                                    <td className="py-3 px-4 text-center font-mono text-emerald-400">Unlimited</td>
-                                    <td className="py-3 px-4 text-center font-mono text-emerald-400">Unlimited</td>
-                                </tr>
-                                <tr>
-                                    <td className="py-3 px-4 font-medium">Urgency Engine & Overdue Alerts</td>
-                                    <td className="py-3 px-4 text-center font-mono text-emerald-400">Included</td>
-                                    <td className="py-3 px-4 text-center font-mono text-emerald-400">Included</td>
-                                    <td className="py-3 px-4 text-center font-mono text-emerald-400">Included</td>
-                                </tr>
-                                <tr>
-                                    <td className="py-3 px-4 font-medium">Class & Assignment File Uploads</td>
-                                    <td className="py-3 px-4 text-center text-muted-foreground font-mono">—</td>
-                                    <td className="py-3 px-4 text-center font-mono text-emerald-400">Included</td>
-                                    <td className="py-3 px-4 text-center font-mono text-emerald-400">Included</td>
-                                </tr>
-                                <tr>
-                                    <td className="py-3 px-4 font-medium">Total Cloud Storage Quota</td>
-                                    <td className="py-3 px-4 text-center font-mono text-muted-foreground">0 MB</td>
-                                    <td className="py-3 px-4 text-center font-mono font-semibold">500 MB</td>
-                                    <td className="py-3 px-4 text-center font-mono font-semibold text-primary">5 GB</td>
-                                </tr>
-                                <tr>
-                                    <td className="py-3 px-4 font-medium">Max Single File Size</td>
-                                    <td className="py-3 px-4 text-center font-mono text-muted-foreground">—</td>
-                                    <td className="py-3 px-4 text-center font-mono">25 MB</td>
-                                    <td className="py-3 px-4 text-center font-mono">100 MB</td>
-                                </tr>
-                                <tr>
-                                    <td className="py-3 px-4 font-medium">In-Browser PDF & Image Lightbox</td>
-                                    <td className="py-3 px-4 text-center text-muted-foreground font-mono">—</td>
-                                    <td className="py-3 px-4 text-center font-mono text-emerald-400">Included</td>
-                                    <td className="py-3 px-4 text-center font-mono text-emerald-400">Included</td>
-                                </tr>
-                                <tr>
-                                    <td className="py-3 px-4 font-medium">Gemini AI Study Copilot</td>
-                                    <td className="py-3 px-4 text-center text-muted-foreground font-mono">—</td>
-                                    <td className="py-3 px-4 text-center text-muted-foreground font-mono">—</td>
-                                    <td className="py-3 px-4 text-center font-mono text-emerald-400">Unlimited</td>
-                                </tr>
-                                <tr>
-                                    <td className="py-3 px-4 font-medium">AI Reads Notes & File Context</td>
-                                    <td className="py-3 px-4 text-center text-muted-foreground font-mono">—</td>
-                                    <td className="py-3 px-4 text-center text-muted-foreground font-mono">—</td>
-                                    <td className="py-3 px-4 text-center font-mono text-emerald-400">Included</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </main>
-
-            {/* Footer */}
-            <footer className="border-t border-border py-8 bg-card text-muted-foreground text-xs mt-20">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                        <div className="size-5 bg-primary text-primary-foreground flex items-center justify-center rounded-none text-xs font-bold">
-                            d
-                        </div>
-                        <span>Due Academic Platform — Modern Full-Stack Architecture</span>
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <Link href="/pricing" className="hover:text-foreground transition-colors">
-                            Pricing
-                        </Link>
-                        <Link href="/dashboard" className="hover:text-foreground transition-colors">
-                            Dashboard
-                        </Link>
-                    </div>
-                </div>
-            </footer>
         </div>
     );
 }
