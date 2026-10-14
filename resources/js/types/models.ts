@@ -141,4 +141,23 @@ export interface Subscription {
     ends_at: string | null;
 }
 
+export interface AiMessage {
+    id: number;
+    conversation_id?: number;
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    tokens_used: number;
+    created_at: string;
+}
+
+export interface AiConversation {
+    id: number;
+    user_id: number;
+    assignment_id: number;
+    title: string;
+    created_at: string;
+    messages?: AiMessage[];
+}
+
+
 

@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\AssignmentAiController;
 use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\AssignmentNoteController;
 use App\Http\Controllers\CourseClassController;
@@ -44,6 +46,21 @@ Route::middleware(['auth'])->group(function () {
         ->name('resources.download');
     Route::delete('resources/{resource}', [ResourceController::class, 'destroy'])
         ->name('resources.destroy');
+
+    // Gemini AI Study Assistant (requires premium/genius tier)
+    Route::prefix('assignments/{assignment}/ai')->as('assignments.ai.')->middleware('subscription.feature:ai')->group(function () {
+        Route::get('messages', [AssignmentAiController::class, 'index'])->name('messages');
+        Route::post('chat', [AssignmentAiController::class, 'chat'])->name('chat');
+        Route::delete('history', [AssignmentAiController::class, 'clear'])->name('clear');
+    });
+
+    // Global Workspace Due Copilot & @Mentions (requires premium/genius tier)
+    Route::prefix('ai')->as('ai.')->middleware('subscription.feature:ai')->group(function () {
+        Route::get('mentionables', [AiChatController::class, 'mentionables'])->name('mentionables');
+        Route::get('messages', [AiChatController::class, 'messages'])->name('messages');
+        Route::post('chat', [AiChatController::class, 'chat'])->name('chat');
+        Route::delete('history', [AiChatController::class, 'clear'])->name('clear');
+    });
 });
 
 require __DIR__.'/settings.php';

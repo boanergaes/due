@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AiChatApiController;
+use App\Http\Controllers\Api\V1\AssignmentAiApiController;
 use App\Http\Controllers\Api\V1\AssignmentApiController;
 use App\Http\Controllers\Api\V1\AssignmentNoteApiController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -52,5 +54,20 @@ Route::prefix('v1')->as('api.v1.')->group(function () {
         Route::get('resources/{resource}/view', [ResourceApiController::class, 'view']);
         Route::get('resources/{resource}/download', [ResourceApiController::class, 'download']);
         Route::delete('resources/{resource}', [ResourceApiController::class, 'destroy']);
+
+        // Gemini AI Study Assistant (Sanctum mobile API)
+        Route::prefix('assignments/{assignment}/ai')->middleware('subscription.feature:ai')->group(function () {
+            Route::get('messages', [AssignmentAiApiController::class, 'messages']);
+            Route::post('chat', [AssignmentAiApiController::class, 'chat']);
+            Route::delete('history', [AssignmentAiApiController::class, 'clear']);
+        });
+
+        // Global Workspace Due Copilot & @Mentions (Sanctum mobile API)
+        Route::prefix('ai')->middleware('subscription.feature:ai')->group(function () {
+            Route::get('mentionables', [AiChatApiController::class, 'mentionables']);
+            Route::get('messages', [AiChatApiController::class, 'messages']);
+            Route::post('chat', [AiChatApiController::class, 'chat']);
+            Route::delete('history', [AiChatApiController::class, 'clear']);
+        });
     });
 });

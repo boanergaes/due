@@ -14,12 +14,12 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $user_id
- * @property int $assignment_id
+ * @property int|null $assignment_id
  * @property string $title
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User $user
- * @property-read Assignment $assignment
+ * @property-read Assignment|null $assignment
  * @property-read Collection<int, AiMessage> $messages
  */
 #[Fillable([
