@@ -46,8 +46,9 @@ class HandleInertiaRequests extends Middleware
                 'tier' => $request->user()->subscription_tier->value,
                 'tier_label' => $request->user()->subscription_tier->label(),
                 'role' => $request->user()->role->value,
-                'is_super_admin' => $request->user()->isSuperAdmin(),
-                'features' => $request->user()->isSuperAdmin()
+                'is_admin' => $request->user()->isAdmin(),
+                'is_super_admin' => $request->user()->isAdmin(),
+                'features' => $request->user()->isAdmin()
                     ? ['feature:core', 'feature:resources', 'feature:ai', 'admin:access']
                     : $request->user()->subscription_tier->features(),
                 'storage_used_bytes' => $request->user()->storage_used_bytes,

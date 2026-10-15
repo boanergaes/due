@@ -7,6 +7,7 @@ enum SubscriptionStatus: string
     case Active = 'active';
     case Cancelled = 'cancelled';
     case PastDue = 'past_due';
+    case Expired = 'expired';
 
     public function label(): string
     {
@@ -14,6 +15,7 @@ enum SubscriptionStatus: string
             self::Active => 'Active',
             self::Cancelled => 'Cancelled',
             self::PastDue => 'Past Due',
+            self::Expired => 'Expired',
         };
     }
 

@@ -38,9 +38,9 @@ export function ResourceSection({
         };
     }>().props;
 
-    const isSuperAdmin = auth?.user?.role === 'super_admin';
+    const isAdmin = auth?.user?.role === 'admin' || auth?.user?.role === 'super_admin';
     const hasResourceFeature =
-        isSuperAdmin ||
+        isAdmin ||
         (subscription?.features?.includes('feature:resources') ??
             ['basic', 'premium'].includes(auth?.user?.subscription_tier || ''));
 

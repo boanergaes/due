@@ -29,7 +29,7 @@ class ResourceStorageService
 
         // 2. File size limit check based on tier
         $fileSize = $file->getSize();
-        $maxSizeBytes = $user->isSuperAdmin()
+        $maxSizeBytes = $user->isAdmin()
             ? PHP_INT_MAX
             : $user->subscription_tier->maxFileSizeMb() * 1024 * 1024;
 

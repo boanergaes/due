@@ -47,9 +47,9 @@ test('genius tier has resources and ai features and 5GB quota', function () {
     expect($tier->maxFileSizeBytes())->toBe(104_857_600);    // 100 MB
 });
 
-test('user role enum checks super admin correctly', function () {
-    expect(UserRole::Student->isSuperAdmin())->toBeFalse();
-    expect(UserRole::SuperAdmin->isSuperAdmin())->toBeTrue();
+test('user role enum checks admin correctly', function () {
+    expect(UserRole::Student->isAdmin())->toBeFalse();
+    expect(UserRole::Admin->isAdmin())->toBeTrue();
     expect(UserRole::Student->label())->toBe('Student');
-    expect(UserRole::SuperAdmin->label())->toBe('Super Administrator');
+    expect(UserRole::Admin->label())->toBe('Administrator');
 });

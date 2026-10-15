@@ -27,13 +27,14 @@ class SubscriptionApiController extends Controller
         return response()->json([
             'tier' => $user->subscription_tier->value,
             'tier_label' => $user->subscription_tier->label(),
-            'is_super_admin' => $user->isSuperAdmin(),
+            'is_admin' => $user->isAdmin(),
+            'is_super_admin' => $user->isAdmin(),
             'abilities' => $this->subscriptionService->getSanctumAbilities($user),
             'storage' => [
                 'used_bytes' => $user->storage_used_bytes,
                 'limit_bytes' => $user->storageLimitBytes(),
                 'used_formatted' => $this->formatBytes($user->storage_used_bytes),
-                'limit_formatted' => $user->isSuperAdmin() ? 'Unlimited' : $this->formatBytes($user->storageLimitBytes()),
+                'limit_formatted' => $user->isAdmin() ? 'Unlimited' : $this->formatBytes($user->storageLimitBytes()),
                 'percentage' => $user->storageLimitBytes() > 0 ? min(100, round(($user->storage_used_bytes / $user->storageLimitBytes()) * 100, 1)) : 0,
             ],
             'expires_at' => $user->subscription_expires_at?->toISOString(),

@@ -30,14 +30,14 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Super Administrator
+        // Administrator
         User::firstOrCreate(
             ['email' => 'admin@due.local'],
             [
-                'name' => 'Super Administrator',
+                'name' => 'Administrator',
                 'password' => bcrypt('password'),
                 'appearance' => 'dark',
-                'role' => UserRole::SuperAdmin,
+                'role' => UserRole::Admin,
                 'subscription_tier' => SubscriptionTier::Premium,
             ]
         );

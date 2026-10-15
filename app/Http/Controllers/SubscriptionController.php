@@ -25,7 +25,8 @@ class SubscriptionController extends Controller
 
         return Inertia::render('pricing', [
             'currentTier' => $user?->subscription_tier->value ?? 'free',
-            'isSuperAdmin' => $user?->isSuperAdmin() ?? false,
+            'isAdmin' => $user?->isAdmin() ?? false,
+            'isSuperAdmin' => $user?->isAdmin() ?? false,
             'tiers' => [
                 [
                     'key' => SubscriptionTier::Free->value,
@@ -160,7 +161,8 @@ class SubscriptionController extends Controller
         return Inertia::render('settings/subscription', [
             'currentTier' => $user->subscription_tier->value,
             'tierLabel' => $user->subscription_tier->label(),
-            'isSuperAdmin' => $user->isSuperAdmin(),
+            'isAdmin' => $user->isAdmin(),
+            'isSuperAdmin' => $user->isAdmin(),
             'subscription' => $subscription ? [
                 'id' => $subscription->id,
                 'tier' => $subscription->tier->value,
@@ -176,7 +178,7 @@ class SubscriptionController extends Controller
             'storageLimitBytes' => $user->storageLimitBytes(),
             'storageFormatted' => [
                 'used' => $this->formatBytes($user->storage_used_bytes),
-                'limit' => $user->isSuperAdmin() ? 'Unlimited' : $this->formatBytes($user->storageLimitBytes()),
+                'limit' => $user->isAdmin() ? 'Unlimited' : $this->formatBytes($user->storageLimitBytes()),
                 'percentage' => $user->storageLimitBytes() > 0 ? min(100, round(($user->storage_used_bytes / $user->storageLimitBytes()) * 100, 1)) : 0,
             ],
             'expiresAt' => $user->subscription_expires_at?->toISOString(),

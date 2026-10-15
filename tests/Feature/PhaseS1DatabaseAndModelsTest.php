@@ -20,7 +20,7 @@ test('user model has subscription tier and role attributes and helper methods', 
         'subscription_tier' => SubscriptionTier::Free,
     ]);
 
-    expect($student->isSuperAdmin())->toBeFalse();
+    expect($student->isAdmin())->toBeFalse();
     expect($student->hasFeature(SubscriptionTier::FEATURE_CORE))->toBeTrue();
     expect($student->hasFeature(SubscriptionTier::FEATURE_RESOURCES))->toBeFalse();
     expect($student->hasFeature(SubscriptionTier::FEATURE_AI))->toBeFalse();
@@ -37,11 +37,11 @@ test('user model has subscription tier and role attributes and helper methods', 
     expect($genius->hasFeature(SubscriptionTier::FEATURE_AI))->toBeTrue();
     expect($genius->hasFeature(SubscriptionTier::FEATURE_RESOURCES))->toBeTrue();
 
-    $superAdmin = User::factory()->superAdmin()->create();
-    expect($superAdmin->isSuperAdmin())->toBeTrue();
-    expect($superAdmin->hasFeature(SubscriptionTier::FEATURE_RESOURCES))->toBeTrue();
-    expect($superAdmin->hasFeature(SubscriptionTier::FEATURE_AI))->toBeTrue();
-    expect($superAdmin->canUploadResource(999_999_999))->toBeTrue();
+    $admin = User::factory()->admin()->create();
+    expect($admin->isAdmin())->toBeTrue();
+    expect($admin->hasFeature(SubscriptionTier::FEATURE_RESOURCES))->toBeTrue();
+    expect($admin->hasFeature(SubscriptionTier::FEATURE_AI))->toBeTrue();
+    expect($admin->canUploadResource(999_999_999))->toBeTrue();
 });
 
 test('user can have multiple subscriptions and retrieves active subscription', function () {

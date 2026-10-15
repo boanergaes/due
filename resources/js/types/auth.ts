@@ -5,7 +5,7 @@ export type User = {
     avatar?: string;
     email_verified_at: string | null;
     appearance?: 'light' | 'dark' | 'system';
-    role?: 'student' | 'super_admin';
+    role?: 'student' | 'admin';
     subscription_tier?: 'free' | 'basic' | 'premium';
     subscription_expires_at?: string | null;
     storage_used_bytes?: number;
@@ -18,8 +18,9 @@ export type User = {
 export type UserSubscriptionInfo = {
     tier: 'free' | 'basic' | 'premium';
     tier_label: string;
-    role: 'student' | 'super_admin';
-    is_super_admin: boolean;
+    role: 'student' | 'admin';
+    is_admin?: boolean;
+    is_super_admin?: boolean;
     features: string[];
     storage_used_bytes: number;
     storage_limit_bytes: number;

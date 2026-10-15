@@ -5,19 +5,27 @@ namespace App\Enums;
 enum UserRole: string
 {
     case Student = 'student';
-    case SuperAdmin = 'super_admin';
+    case Admin = 'admin';
 
     public function label(): string
     {
         return match ($this) {
             self::Student => 'Student',
-            self::SuperAdmin => 'Super Administrator',
+            self::Admin => 'Administrator',
         };
     }
 
+    public function isAdmin(): bool
+    {
+        return $this === self::Admin;
+    }
+
+    /**
+     * Backward-compatible alias for isAdmin.
+     */
     public function isSuperAdmin(): bool
     {
-        return $this === self::SuperAdmin;
+        return $this->isAdmin();
     }
 
     /**
@@ -28,3 +36,4 @@ enum UserRole: string
         return array_column(self::cases(), 'value');
     }
 }
+

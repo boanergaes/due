@@ -37,7 +37,8 @@ interface SubscriptionData {
 interface SubscriptionSettingsProps {
     currentTier: 'free' | 'basic' | 'premium';
     tierLabel: string;
-    isSuperAdmin: boolean;
+    isAdmin?: boolean;
+    isSuperAdmin?: boolean;
     subscription: SubscriptionData | null;
     storageUsedBytes: number;
     storageLimitBytes: number;
@@ -52,11 +53,13 @@ interface SubscriptionSettingsProps {
 export default function SubscriptionSettings({
     currentTier,
     tierLabel,
+    isAdmin,
     isSuperAdmin,
     subscription,
     storageFormatted,
     expiresAt,
 }: SubscriptionSettingsProps) {
+    const adminUser = Boolean(isAdmin || isSuperAdmin);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const { post, processing } = useForm({});
 
@@ -79,17 +82,17 @@ export default function SubscriptionSettings({
                     description="View your active tier, manage your subscription, and monitor storage quota usage."
                 />
 
-                {/* Plan Overview Card (Zero Radius) */}
-                <div className="border border-border bg-card p-5 space-y-4 rounded-none">
+                {/* Plan Overview Card */}
+                <div className="border border-border bg-card p-5 space-y-4 rounded-lg">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                                <span className="text-sm font-semibold font-mono uppercase tracking-wide">
+                                <span className="text-sm font-semibold tracking-wide">
                                     Current Plan
                                 </span>
                                 <Badge
                                     variant="outline"
-                                    className={`rounded-none font-mono text-xs font-semibold ${
+                                    className={`rounded-md text-xs font-semibold ${
                                         currentTier === 'premium'
                                             ? 'border-primary text-primary bg-primary/10'
                                             : currentTier === 'basic'
@@ -97,14 +100,14 @@ export default function SubscriptionSettings({
                                               : 'border-muted-foreground text-muted-foreground'
                                     }`}
                                 >
-                                    {isSuperAdmin ? 'SUPER ADMIN (UNLIMITED)' : `${tierLabel.toUpperCase()} TIER`}
+                                    {adminUser ? 'ADMIN (UNLIMITED)' : `${tierLabel.toUpperCase()} TIER`}
                                 </Badge>
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 {currentTier === 'free' && 'Core assignment and deadline tracking without file storage or AI.'}
                                 {currentTier === 'basic' && 'Scholar plan with class & assignment file uploads and in-browser previewers.'}
                                 {currentTier === 'premium' && 'Genius plan with full Gemini AI study assistant and 5 GB storage.'}
-                                {isSuperAdmin && 'System-level administrator account with unrestricted access to all features.'}
+                                {adminUser && 'Administrator account with unrestricted access to all features.'}
                             </p>
                         </div>
 

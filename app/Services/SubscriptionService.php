@@ -18,7 +18,7 @@ class SubscriptionService
      */
     public function generatePassport(User $user): array
     {
-        $features = $user->isSuperAdmin()
+        $features = $user->isAdmin()
             ? [SubscriptionTier::FEATURE_CORE, SubscriptionTier::FEATURE_RESOURCES, SubscriptionTier::FEATURE_AI, 'admin:access']
             : $user->subscription_tier->features();
 
@@ -95,7 +95,7 @@ class SubscriptionService
      */
     public function getSanctumAbilities(User $user): array
     {
-        if ($user->isSuperAdmin()) {
+        if ($user->isAdmin()) {
             return [
                 SubscriptionTier::FEATURE_CORE,
                 SubscriptionTier::FEATURE_RESOURCES,

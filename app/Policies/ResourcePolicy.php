@@ -13,7 +13,7 @@ class ResourcePolicy
      */
     public function view(User $user, Resource $resource): bool
     {
-        return $user->isSuperAdmin() || $user->id === $resource->user_id;
+        return $user->isAdmin() || $user->id === $resource->user_id;
     }
 
     /**
@@ -21,7 +21,7 @@ class ResourcePolicy
      */
     public function create(User $user): bool
     {
-        return $user->isSuperAdmin() || $user->hasFeature(SubscriptionTier::FEATURE_RESOURCES);
+        return $user->isAdmin() || $user->hasFeature(SubscriptionTier::FEATURE_RESOURCES);
     }
 
     /**
@@ -29,7 +29,7 @@ class ResourcePolicy
      */
     public function delete(User $user, Resource $resource): bool
     {
-        return $user->isSuperAdmin() || $user->id === $resource->user_id;
+        return $user->isAdmin() || $user->id === $resource->user_id;
     }
 
     /**
@@ -37,6 +37,6 @@ class ResourcePolicy
      */
     public function download(User $user, Resource $resource): bool
     {
-        return $user->isSuperAdmin() || $user->id === $resource->user_id;
+        return $user->isAdmin() || $user->id === $resource->user_id;
     }
 }

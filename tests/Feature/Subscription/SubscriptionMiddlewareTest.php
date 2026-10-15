@@ -68,17 +68,17 @@ test('genius tier can access both resources and ai features on web', function ()
         ->assertSee('ai_ok');
 });
 
-test('super admin can access all features regardless of tier on web', function () {
-    $superAdmin = User::factory()->superAdmin()->create([
+test('admin can access all features regardless of tier on web', function () {
+    $admin = User::factory()->admin()->create([
         'subscription_tier' => SubscriptionTier::Free,
     ]);
 
-    $this->actingAs($superAdmin)
+    $this->actingAs($admin)
         ->get('/test-resources-feature')
         ->assertOk()
         ->assertSee('resources_ok');
 
-    $this->actingAs($superAdmin)
+    $this->actingAs($admin)
         ->get('/test-ai-feature')
         ->assertOk()
         ->assertSee('ai_ok');

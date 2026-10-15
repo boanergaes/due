@@ -142,11 +142,19 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
-     * Check if user is a Super Administrator.
+     * Check if user is an Administrator.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::Admin;
+    }
+
+    /**
+     * Backward-compatible alias for isAdmin.
      */
     public function isSuperAdmin(): bool
     {
-        return $this->role === UserRole::SuperAdmin;
+        return $this->isAdmin();
     }
 
     /**
@@ -154,7 +162,7 @@ class User extends Authenticatable implements PasskeyUser
      */
     public function hasFeature(string $feature): bool
     {
-        if ($this->isSuperAdmin()) {
+        if ($this->isAdmin()) {
             return true;
         }
 
@@ -166,7 +174,7 @@ class User extends Authenticatable implements PasskeyUser
      */
     public function storageLimitBytes(): int
     {
-        if ($this->isSuperAdmin()) {
+        if ($this->isAdmin()) {
             return PHP_INT_MAX;
         }
 
@@ -182,7 +190,7 @@ class User extends Authenticatable implements PasskeyUser
             return false;
         }
 
-        if ($this->isSuperAdmin()) {
+        if ($this->isAdmin()) {
             return true;
         }
 

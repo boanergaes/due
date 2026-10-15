@@ -44,13 +44,21 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the user is a Super Administrator.
+     * Indicate that the user is an Administrator.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Admin,
+        ]);
+    }
+
+    /**
+     * Backward-compatible alias for admin state.
      */
     public function superAdmin(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'role' => UserRole::SuperAdmin,
-        ]);
+        return $this->admin();
     }
 
     /**

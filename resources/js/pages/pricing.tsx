@@ -25,11 +25,13 @@ interface PlanTier {
 
 interface PricingProps {
     currentTier: string;
-    isSuperAdmin: boolean;
+    isAdmin?: boolean;
+    isSuperAdmin?: boolean;
     tiers: PlanTier[];
 }
 
-export default function Pricing({ currentTier, isSuperAdmin, tiers }: PricingProps) {
+export default function Pricing({ currentTier, isAdmin, isSuperAdmin, tiers }: PricingProps) {
+    const adminUser = Boolean(isAdmin || isSuperAdmin);
     const { auth } = usePage<{ auth: { user: { id: number; name: string } | null } }>().props;
     const [interval, setInterval] = useState<'monthly' | 'annual'>('monthly');
 
@@ -115,7 +117,7 @@ export default function Pricing({ currentTier, isSuperAdmin, tiers }: PricingPro
                 {/* Plan Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
                     {tiers.map((tier) => {
-                        const isCurrent = currentTier === tier.key && !isSuperAdmin;
+                        const isCurrent = currentTier === tier.key && !adminUser;
                         const price = interval === 'annual' ? tier.annualPrice : tier.monthlyPrice;
                         const periodLabel = interval === 'annual' ? '/ year' : '/ month';
 

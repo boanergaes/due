@@ -57,7 +57,7 @@ class EnsureSubscriptionFeature
         $features = (array) ($passport['features'] ?? []);
         $role = $passport['role'] ?? 'student';
 
-        if ($role === 'super_admin' || in_array($requiredAbility, $features, true)) {
+        if ($role === 'admin' || $role === 'super_admin' || in_array($requiredAbility, $features, true)) {
             return $next($request);
         }
 

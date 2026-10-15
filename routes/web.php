@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\AssignmentAiController;
 use App\Http\Controllers\AssignmentController;
@@ -60,6 +62,25 @@ Route::middleware(['auth'])->group(function () {
         Route::get('messages', [AiChatController::class, 'messages'])->name('messages');
         Route::post('chat', [AiChatController::class, 'chat'])->name('chat');
         Route::delete('history', [AiChatController::class, 'clear'])->name('clear');
+    });
+});
+
+// Dedicated Admin Portal (Web-only, stealth entrance)
+Route::prefix('admin')->group(function () {
+    Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
+    Route::post('login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
+    Route::post('logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
+
+    Route::middleware(['admin'])->as('admin.')->group(function () {
+        Route::get('/', fn () => redirect()->route('admin.dashboard'));
+        Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::get('users', [AdminDashboardController::class, 'users'])->name('users');
+        Route::patch('users/{user}/tier', [AdminDashboardController::class, 'updateUserTier'])->name('users.update-tier');
+        Route::patch('users/{user}/role', [AdminDashboardController::class, 'updateUserRole'])->name('users.update-role');
+        Route::delete('users/{user}/ai', [AdminDashboardController::class, 'clearUserAi'])->name('users.clear-ai');
+        Route::get('subscriptions', [AdminDashboardController::class, 'subscriptions'])->name('subscriptions');
+        Route::get('storage', [AdminDashboardController::class, 'storage'])->name('storage');
+        Route::delete('resources/{resource}', [AdminDashboardController::class, 'deleteResource'])->name('resources.delete');
     });
 });
 

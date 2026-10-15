@@ -47,7 +47,9 @@ export function AiCopilotSidebar() {
 
     const isGenius =
         auth?.user?.subscription_tier === 'premium' ||
+        auth?.user?.role === 'admin' ||
         auth?.user?.role === 'super_admin' ||
+        auth?.subscription?.is_admin === true ||
         auth?.subscription?.is_super_admin === true ||
         (auth?.subscription?.features && auth.subscription.features.includes('feature:ai'));
 
