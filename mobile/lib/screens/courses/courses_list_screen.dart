@@ -150,6 +150,11 @@ class _CoursesListScreenState extends State<CoursesListScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Due Copilot (Gemini AI)',
+            icon: const Icon(Icons.smart_toy_outlined, color: AppColors.coral, size: 20),
+            onPressed: () => Scaffold.of(context).openEndDrawer(),
+          ),
+          IconButton(
             tooltip: 'Add Course',
             icon: const Icon(Icons.add, size: 22),
             onPressed: _handleCreateCourse,

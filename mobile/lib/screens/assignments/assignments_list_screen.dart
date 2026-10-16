@@ -45,6 +45,53 @@ class _AssignmentsListScreenState extends State<AssignmentsListScreen> {
     await context.read<CourseProvider>().fetchCourses(silent: true);
   }
 
+  Future<void> _selectStartDate() async {
+    final provider = context.read<AssignmentProvider>();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: provider.startDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            dialogTheme: const DialogThemeData(shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero)),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && mounted) {
+      provider.setDateRange(picked, provider.endDate);
+    }
+  }
+
+  Future<void> _selectEndDate() async {
+    final provider = context.read<AssignmentProvider>();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: provider.endDate ?? provider.startDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            dialogTheme: const DialogThemeData(shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero)),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && mounted) {
+      provider.setDateRange(provider.startDate, picked);
+    }
+  }
+
+  void _handleResetFilters() {
+    _searchController.clear();
+    context.read<AssignmentProvider>().resetFilters();
+  }
+
   Future<void> _handleCreateAssignment() async {
     final created = await Navigator.of(context).push<Assignment?>(
       MaterialPageRoute(
@@ -72,55 +119,71 @@ class _AssignmentsListScreenState extends State<AssignmentsListScreen> {
     final courses = courseProvider.courses;
 
     return Scaffold(
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _handleRefresh,
-          color: AppColors.coral,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              // Header Section
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'ASSIGNMENTS',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${assignments.length} ${assignments.length == 1 ? 'TASK' : 'TASKS'} LISTED',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontFamily: 'monospace',
-                                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              color: AppColors.coral,
+              margin: const EdgeInsets.only(right: 8),
+            ),
+            const Text(
+              'ASSIGNMENTS',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Due Copilot (Gemini AI)',
+            icon: const Icon(Icons.smart_toy_outlined, color: AppColors.coral, size: 20),
+            onPressed: () => Scaffold.of(context).openEndDrawer(),
+          ),
+          IconButton(
+            tooltip: 'Add Assignment',
+            icon: const Icon(Icons.add, size: 22),
+            onPressed: _handleCreateAssignment,
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _handleRefresh,
+        color: AppColors.coral,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // Header Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${assignments.length} ${assignments.length == 1 ? 'TASK LISTED' : 'TASKS LISTED'}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                            fontFamily: 'monospace',
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                           ),
-                          ZeroButton(
-                            label: 'NEW',
-                            icon: Icons.add,
-                            variant: ZeroButtonVariant.primary,
-                            onPressed: _handleCreateAssignment,
-                          ),
-                        ],
-                      ),
+                        ),
+                        TextButton.icon(
+                          icon: const Icon(Icons.add, size: 16),
+                          label: const Text('NEW ASSIGNMENT', style: TextStyle(fontFamily: 'monospace', fontSize: 12)),
+                          onPressed: _handleCreateAssignment,
+                        ),
+                      ],
+                    ),
                       const SizedBox(height: 16),
 
                       // Instant Search Bar
@@ -158,35 +221,242 @@ class _AssignmentsListScreenState extends State<AssignmentsListScreen> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 12),
 
-                      // Course Class Filters (if any courses exist)
-                      if (courses.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              _buildCourseFilterChip(
-                                label: 'ALL COURSES',
-                                isSelected: provider.selectedClassId == null,
-                                onTap: () => provider.setClassFilter(null),
-                                isDark: isDark,
+                      // Dropdown Filters: Course & Urgency
+                      Row(
+                        children: [
+                          // Course Dropdown
+                          Expanded(
+                            child: Container(
+                              height: 38,
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              decoration: BoxDecoration(
+                                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                                border: Border.all(
+                                  color: provider.selectedClassId != null
+                                      ? AppColors.coral
+                                      : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                                ),
                               ),
-                              ...courses.map((CourseClass c) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(left: 8),
-                                  child: _buildCourseFilterChip(
-                                    label: c.courseName,
-                                    isSelected: provider.selectedClassId == c.id,
-                                    onTap: () => provider.setClassFilter(c.id),
-                                    isDark: isDark,
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<int?>(
+                                  value: provider.selectedClassId,
+                                  isExpanded: true,
+                                  dropdownColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                                  icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontFamily: 'monospace',
+                                    fontWeight: provider.selectedClassId != null ? FontWeight.bold : FontWeight.normal,
+                                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                                   ),
-                                );
-                              }),
-                            ],
+                                  items: [
+                                    DropdownMenuItem<int?>(
+                                      value: null,
+                                      child: Text(
+                                        'All Courses (${courses.length})',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    ...courses.map((CourseClass c) {
+                                      return DropdownMenuItem<int?>(
+                                        value: c.id,
+                                        child: Text(
+                                          c.courseName,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      );
+                                    }),
+                                  ],
+                                  onChanged: (val) => provider.setClassFilter(val),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+
+                          // Urgency Dropdown
+                          Expanded(
+                            child: Container(
+                              height: 38,
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              decoration: BoxDecoration(
+                                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                                border: Border.all(
+                                  color: provider.urgencyFilter != null
+                                      ? AppColors.coral
+                                      : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                                ),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String?>(
+                                  value: provider.urgencyFilter,
+                                  isExpanded: true,
+                                  dropdownColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                                  icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontFamily: 'monospace',
+                                    fontWeight: provider.urgencyFilter != null ? FontWeight.bold : FontWeight.normal,
+                                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                  ),
+                                  items: const [
+                                    DropdownMenuItem<String?>(
+                                      value: null,
+                                      child: Text('All Deadlines', overflow: TextOverflow.ellipsis),
+                                    ),
+                                    DropdownMenuItem<String?>(
+                                      value: 'overdue',
+                                      child: Text('Overdue', overflow: TextOverflow.ellipsis),
+                                    ),
+                                    DropdownMenuItem<String?>(
+                                      value: 'due_today',
+                                      child: Text('Due Today', overflow: TextOverflow.ellipsis),
+                                    ),
+                                    DropdownMenuItem<String?>(
+                                      value: 'due_soon',
+                                      child: Text('Due Soon (<48h)', overflow: TextOverflow.ellipsis),
+                                    ),
+                                    DropdownMenuItem<String?>(
+                                      value: 'upcoming',
+                                      child: Text('Upcoming Future', overflow: TextOverflow.ellipsis),
+                                    ),
+                                  ],
+                                  onChanged: (val) => provider.setUrgencyFilter(val),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Date Range & Reset Filters Toolbar
+                      Row(
+                        children: [
+                          // Start Date
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: _selectStartDate,
+                              child: Container(
+                                height: 34,
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                                  border: Border.all(
+                                    color: provider.startDate != null
+                                        ? AppColors.coral
+                                        : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_outlined,
+                                      size: 13,
+                                      color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        provider.startDate != null
+                                            ? DateFormat('MM/dd/yy').format(provider.startDate!)
+                                            : 'From Date',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontFamily: 'monospace',
+                                          color: provider.startDate != null
+                                              ? (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary)
+                                              : (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+
+                          // End Date
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: _selectEndDate,
+                              child: Container(
+                                height: 34,
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                                  border: Border.all(
+                                    color: provider.endDate != null
+                                        ? AppColors.coral
+                                        : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_month_outlined,
+                                      size: 13,
+                                      color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        provider.endDate != null
+                                            ? DateFormat('MM/dd/yy').format(provider.endDate!)
+                                            : 'To Date',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontFamily: 'monospace',
+                                          color: provider.endDate != null
+                                              ? (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary)
+                                              : (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Single Reset Filters Button
+                          if (provider.hasActiveFilters) ...[
+                            const SizedBox(width: 6),
+                            InkWell(
+                              onTap: _handleResetFilters,
+                              child: Container(
+                                height: 34,
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.danger.withValues(alpha: 0.1),
+                                  border: Border.all(color: AppColors.danger.withValues(alpha: 0.5)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.refresh, size: 13, color: AppColors.danger),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      'RESET',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontFamily: 'monospace',
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.danger,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -206,19 +476,12 @@ class _AssignmentsListScreenState extends State<AssignmentsListScreen> {
                     padding: const EdgeInsets.all(20),
                     child: EmptyState(
                       title: 'No assignments found',
-                      message: provider.searchQuery.isNotEmpty || provider.statusFilter != 'all' || provider.selectedClassId != null
-                          ? 'No coursework matches your active filter or search criteria.'
+                      message: provider.hasActiveFilters
+                          ? 'No coursework matches your active filter or search criteria. Tap RESET above to view all tasks.'
                           : 'Get ahead of your academic deadlines by adding your first assignment.',
                       icon: Icons.assignment_outlined,
-                      action: provider.searchQuery.isNotEmpty || provider.statusFilter != 'all' || provider.selectedClassId != null
-                          ? ZeroButton(
-                              label: 'CLEAR FILTERS',
-                              variant: ZeroButtonVariant.outline,
-                              onPressed: () {
-                                _searchController.clear();
-                                provider.resetFilters();
-                              },
-                            )
+                      action: provider.hasActiveFilters
+                          ? null
                           : ZeroButton(
                               label: 'ADD FIRST ASSIGNMENT',
                               variant: ZeroButtonVariant.primary,
@@ -246,7 +509,6 @@ class _AssignmentsListScreenState extends State<AssignmentsListScreen> {
             ],
           ),
         ),
-      ),
     );
   }
 
@@ -282,40 +544,6 @@ class _AssignmentsListScreenState extends State<AssignmentsListScreen> {
     );
   }
 
-  Widget _buildCourseFilterChip({
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-    required bool isDark,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark ? AppColors.darkSurfaceHover : AppColors.lightSurfaceHover)
-              : Colors.transparent,
-          border: Border.all(
-            color: isSelected
-                ? (isDark ? Colors.white70 : Colors.black87)
-                : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected
-                ? (isDark ? Colors.white : Colors.black)
-                : (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildAssignmentCard(BuildContext context, Assignment assignment, bool isDark) {
     return ZeroCard(
       padding: const EdgeInsets.all(16),
@@ -337,24 +565,29 @@ class _AssignmentsListScreenState extends State<AssignmentsListScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               if (assignment.courseClass != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.coral.withValues(alpha: 0.12),
-                    border: Border.all(color: AppColors.coral.withValues(alpha: 0.4)),
-                  ),
-                  child: Text(
-                    assignment.courseClass!.courseName,
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.coral,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.coral.withValues(alpha: 0.12),
+                      border: Border.all(color: AppColors.coral.withValues(alpha: 0.4)),
+                    ),
+                    child: Text(
+                      assignment.courseClass!.courseName,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.coral,
+                      ),
                     ),
                   ),
                 )
               else
                 const SizedBox.shrink(),
+              const SizedBox(width: 8),
               UrgencyBadge(
                 label: assignment.urgencyLabel,
                 isOverdue: assignment.isOverdue,

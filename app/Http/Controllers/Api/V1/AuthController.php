@@ -150,4 +150,88 @@ class AuthController extends Controller
             'appearance' => $validated['appearance'],
         ]);
     }
+
+    /**
+     * Update the user's name and email address.
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
+        ]);
+
+        $user->fill($validated);
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+        $user->save();
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role->value,
+                'subscription_tier' => $user->subscription_tier->value,
+                'appearance' => $user->appearance ?? 'dark',
+                'created_at' => $user->created_at?->toISOString(),
+            ],
+        ]);
+    }
+
+    /**
+     * Update the user's password.
+     */
+    public function updatePassword(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => [__('The provided password does not match your current password.')],
+            ]);
+        }
+
+        $user->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        return response()->json([
+            'message' => 'Password updated successfully',
+        ]);
+    }
+
+    /**
+     * Delete the authenticated user's account.
+     */
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        if (! Hash::check($validated['password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => [__('The provided password does not match your current password.')],
+            ]);
+        }
+
+        $user->tokens()->delete();
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Account deleted successfully',
+        ]);
+    }
 }

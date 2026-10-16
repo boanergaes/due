@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import '../config/api_config.dart';
 import '../models/assignment.dart';
 import '../models/assignment_note.dart';
@@ -18,6 +19,8 @@ class AssignmentProvider extends ChangeNotifier {
   int? _selectedClassId;
   String _searchQuery = '';
   String? _urgencyFilter;
+  DateTime? _startDate;
+  DateTime? _endDate;
 
   AssignmentProvider({
     required this.apiClient,
@@ -36,6 +39,16 @@ class AssignmentProvider extends ChangeNotifier {
   int? get selectedClassId => _selectedClassId;
   String get searchQuery => _searchQuery;
   String? get urgencyFilter => _urgencyFilter;
+  DateTime? get startDate => _startDate;
+  DateTime? get endDate => _endDate;
+
+  bool get hasActiveFilters =>
+      _statusFilter != 'all' ||
+      _selectedClassId != null ||
+      _searchQuery.isNotEmpty ||
+      (_urgencyFilter != null && _urgencyFilter!.isNotEmpty) ||
+      _startDate != null ||
+      _endDate != null;
 
   int get totalCount => _assignments.length;
   int get pendingCount => _assignments.where((a) => a.isPending).length;
@@ -79,12 +92,23 @@ class AssignmentProvider extends ChangeNotifier {
     fetchAssignments();
   }
 
+  /// Sets date range filter (start_date, end_date)
+  void setDateRange(DateTime? start, DateTime? end) {
+    if (_startDate == start && _endDate == end) return;
+    _startDate = start;
+    _endDate = end;
+    notifyListeners();
+    fetchAssignments();
+  }
+
   /// Reset all filters back to default
   void resetFilters() {
     _statusFilter = 'all';
     _selectedClassId = null;
     _searchQuery = '';
     _urgencyFilter = null;
+    _startDate = null;
+    _endDate = null;
     notifyListeners();
     fetchAssignments();
   }
@@ -114,6 +138,14 @@ class AssignmentProvider extends ChangeNotifier {
 
       if (_urgencyFilter != null && _urgencyFilter!.isNotEmpty) {
         queryParams.add('urgency=$_urgencyFilter');
+      }
+
+      if (_startDate != null) {
+        queryParams.add('start_date=${DateFormat('yyyy-MM-dd').format(_startDate!)}');
+      }
+
+      if (_endDate != null) {
+        queryParams.add('end_date=${DateFormat('yyyy-MM-dd').format(_endDate!)}');
       }
 
       final url = '${ApiConfig.assignments}?${queryParams.join('&')}';

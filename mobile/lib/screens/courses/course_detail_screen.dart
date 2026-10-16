@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../models/ai_message.dart';
 import '../../models/course_class.dart';
+import '../../providers/ai_chat_provider.dart';
 import '../../providers/course_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/confirm_dialog.dart';
+import '../../widgets/due_copilot_drawer.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/urgency_badge.dart';
 import '../../widgets/zero_card.dart';
+import '../../widgets/resource_list_widget.dart';
 import '../assignments/assignment_detail_screen.dart';
 import 'course_form_dialog.dart';
 
@@ -127,6 +131,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      endDrawer: const DueCopilotDrawer(),
       appBar: AppBar(
         title: Text(
           course?.courseName ?? widget.courseName,
@@ -139,6 +144,23 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           ),
         ),
         actions: [
+          Builder(
+            builder: (ctx) => IconButton(
+              tooltip: 'Due Copilot (Gemini AI)',
+              icon: const Icon(Icons.smart_toy_outlined, color: AppColors.coral),
+              onPressed: () {
+                if (course != null) {
+                  context.read<AiChatProvider>().addMention(MentionItem(
+                        id: course.id,
+                        name: course.courseName,
+                        type: 'course',
+                        courseName: course.courseName,
+                      ));
+                }
+                Scaffold.of(ctx).openEndDrawer();
+              },
+            ),
+          ),
           if (course != null) ...[
             IconButton(
               tooltip: 'Edit Course',
@@ -259,14 +281,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                   color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
                                 ),
                               ),
-                              Text(
-                                (course?.teacherName?.isNotEmpty == true)
-                                    ? course!.teacherName!
-                                    : 'Not specified',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                              Expanded(
+                                child: Text(
+                                  (course?.teacherName?.isNotEmpty == true)
+                                      ? course!.teacherName!
+                                      : 'Not specified',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                  ),
                                 ),
                               ),
                             ],
@@ -289,14 +314,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                   color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
                                 ),
                               ),
-                              Text(
-                                (course?.teacherContact?.isNotEmpty == true)
-                                    ? course!.teacherContact!
-                                    : 'Not specified',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontFamily: 'monospace',
-                                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                              Expanded(
+                                child: Text(
+                                  (course?.teacherContact?.isNotEmpty == true)
+                                      ? course!.teacherContact!
+                                      : 'Not specified',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontFamily: 'monospace',
+                                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                  ),
                                 ),
                               ),
                             ],
@@ -436,6 +464,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           );
                         },
                       ),
+                    const SizedBox(height: 24),
+
+                    // Section: Course Resources & Syllabus
+                    ResourceListWidget(
+                      resourceableType: 'class',
+                      resourceableId: widget.courseId,
+                      title: 'COURSE SYLLABUS & RESOURCES',
+                    ),
                   ],
                 ),
               ),

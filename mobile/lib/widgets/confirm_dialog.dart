@@ -45,21 +45,25 @@ class ConfirmDialog extends StatelessWidget {
         borderRadius: BorderRadius.zero,
       ),
       title: Text(title),
-      content: Text(
-        message,
-        style: const TextStyle(fontSize: 14),
+      content: SingleChildScrollView(
+        child: Text(
+          message,
+          style: const TextStyle(fontSize: 14),
+        ),
       ),
       actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       actions: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+        Wrap(
+          alignment: WrapAlignment.end,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             ZeroButton(
               label: cancelText,
               variant: ZeroButtonVariant.outline,
               onPressed: () => Navigator.of(context).pop(false),
             ),
-            const SizedBox(width: 8),
             ZeroButton(
               label: confirmText,
               variant: isDestructive

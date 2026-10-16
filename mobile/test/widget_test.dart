@@ -18,6 +18,9 @@ import 'package:due_mobile/screens/assignments/assignments_list_screen.dart';
 import 'package:due_mobile/screens/assignments/note_form_dialog.dart';
 import 'package:due_mobile/screens/auth/register_screen.dart';
 import 'package:due_mobile/models/user.dart';
+import 'package:due_mobile/providers/ai_chat_provider.dart';
+import 'package:due_mobile/providers/resource_provider.dart';
+import 'package:due_mobile/providers/subscription_provider.dart';
 import 'package:due_mobile/screens/courses/course_detail_screen.dart';
 import 'package:due_mobile/screens/courses/courses_list_screen.dart';
 import 'package:due_mobile/screens/dashboard/dashboard_screen.dart';
@@ -311,6 +314,9 @@ void main() {
     final dashboardProvider = DashboardProvider(apiClient: apiClient);
     final courseProvider = CourseProvider(apiClient: apiClient);
     final assignmentProvider = AssignmentProvider(apiClient: apiClient);
+    final subscriptionProvider = SubscriptionProvider(apiClient: apiClient);
+    final resourceProvider = ResourceProvider(apiClient: apiClient);
+    final aiChatProvider = AiChatProvider(apiClient: apiClient);
 
     await tester.pumpWidget(
       MultiProvider(
@@ -320,6 +326,9 @@ void main() {
           ChangeNotifierProvider.value(value: dashboardProvider),
           ChangeNotifierProvider.value(value: courseProvider),
           ChangeNotifierProvider.value(value: assignmentProvider),
+          ChangeNotifierProvider.value(value: subscriptionProvider),
+          ChangeNotifierProvider.value(value: resourceProvider),
+          ChangeNotifierProvider.value(value: aiChatProvider),
         ],
         child: const MaterialApp(
           home: MainNavigationScreen(),
@@ -415,12 +424,16 @@ void main() {
       initialSelectedCourse: testCourse,
       initialAssignments: [testAssignment],
     );
+    final resourceProvider = ResourceProvider(apiClient: apiClient);
+    final subscriptionProvider = SubscriptionProvider(apiClient: apiClient);
 
     await tester.pumpWidget(
       MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: themeProvider),
           ChangeNotifierProvider.value(value: courseProvider),
+          ChangeNotifierProvider.value(value: resourceProvider),
+          ChangeNotifierProvider.value(value: subscriptionProvider),
         ],
         child: const MaterialApp(
           home: CourseDetailScreen(
@@ -536,9 +549,9 @@ void main() {
     await tester.pump();
 
     // Verify Title and Subtitle
-    expect(find.text('ASSIGNMENTS'), findsOneWidget);
+    expect(find.text('ASSIGNMENTS'), findsAtLeast(1));
     expect(find.text('1 TASK LISTED'), findsOneWidget);
-    expect(find.text('NEW'), findsOneWidget);
+    expect(find.text('NEW ASSIGNMENT'), findsOneWidget);
 
     // Verify Status Filter Tabs
     expect(find.text('ALL'), findsOneWidget);
@@ -578,12 +591,18 @@ void main() {
       apiClient: apiClient,
       initialSelectedAssignment: testAssignment,
     );
+    final resourceProvider = ResourceProvider(apiClient: apiClient);
+    final subscriptionProvider = SubscriptionProvider(apiClient: apiClient);
+    final aiChatProvider = AiChatProvider(apiClient: apiClient);
 
     await tester.pumpWidget(
       MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: themeProvider),
           ChangeNotifierProvider.value(value: assignmentProvider),
+          ChangeNotifierProvider.value(value: resourceProvider),
+          ChangeNotifierProvider.value(value: subscriptionProvider),
+          ChangeNotifierProvider.value(value: aiChatProvider),
         ],
         child: MaterialApp(
           home: AssignmentDetailScreen(
@@ -696,12 +715,18 @@ void main() {
       apiClient: apiClient,
       initialSelectedAssignment: testAssignment,
     );
+    final resourceProvider = ResourceProvider(apiClient: apiClient);
+    final subscriptionProvider = SubscriptionProvider(apiClient: apiClient);
+    final aiChatProvider = AiChatProvider(apiClient: apiClient);
 
     await tester.pumpWidget(
       MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: themeProvider),
           ChangeNotifierProvider.value(value: assignmentProvider),
+          ChangeNotifierProvider.value(value: resourceProvider),
+          ChangeNotifierProvider.value(value: subscriptionProvider),
+          ChangeNotifierProvider.value(value: aiChatProvider),
         ],
         child: MaterialApp(
           home: AssignmentDetailScreen(
@@ -723,6 +748,8 @@ void main() {
     expect(find.text('Edge case: handles partition across majority nodes.'), findsOneWidget);
 
     // Tap ADD NOTE button to trigger modal
+    await tester.ensureVisible(find.text('ADD NOTE'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('ADD NOTE'));
     await tester.pumpAndSettle();
 
@@ -884,6 +911,10 @@ void main() {
       ],
     );
 
+    final subscriptionProvider = SubscriptionProvider(apiClient: apiClient);
+    final resourceProvider = ResourceProvider(apiClient: apiClient);
+    final aiChatProvider = AiChatProvider(apiClient: apiClient);
+
     // Mount MainNavigationScreen
     await tester.pumpWidget(
       MultiProvider(
@@ -893,6 +924,9 @@ void main() {
           ChangeNotifierProvider.value(value: courseProvider),
           ChangeNotifierProvider.value(value: assignmentProvider),
           ChangeNotifierProvider.value(value: dashboardProvider),
+          ChangeNotifierProvider.value(value: subscriptionProvider),
+          ChangeNotifierProvider.value(value: resourceProvider),
+          ChangeNotifierProvider.value(value: aiChatProvider),
         ],
         child: const MaterialApp(
           home: MainNavigationScreen(),

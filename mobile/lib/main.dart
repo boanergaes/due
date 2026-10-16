@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'config/api_config.dart';
+import 'providers/ai_chat_provider.dart';
 import 'providers/assignment_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/course_provider.dart';
 import 'providers/dashboard_provider.dart';
+import 'providers/resource_provider.dart';
+import 'providers/subscription_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
@@ -15,10 +19,15 @@ import 'theme/app_theme.dart';
 import 'widgets/zero_button.dart';
 import 'widgets/zero_card.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final tokenStorage = TokenStorage();
+  final savedBaseUrl = await tokenStorage.getBaseUrl();
+  if (savedBaseUrl != null && savedBaseUrl.trim().isNotEmpty) {
+    ApiConfig.setBaseUrl(savedBaseUrl.trim());
+  }
+
   final apiClient = ApiClient(tokenStorage: tokenStorage);
 
   runApp(
@@ -49,6 +58,15 @@ void main() {
         ),
         ChangeNotifierProvider(
           create: (_) => AssignmentProvider(apiClient: apiClient),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => SubscriptionProvider(apiClient: apiClient),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ResourceProvider(apiClient: apiClient),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AiChatProvider(apiClient: apiClient),
         ),
       ],
       child: const DueApp(),

@@ -115,6 +115,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Due Copilot (Gemini AI)',
+            icon: const Icon(Icons.smart_toy_outlined, color: AppColors.coral, size: 20),
+            onPressed: () => Scaffold.of(context).openEndDrawer(),
+          ),
+          IconButton(
             tooltip: 'Refresh Dashboard',
             icon: const Icon(Icons.refresh_outlined, size: 20),
             onPressed: dashboard.isLoading ? null : _handleRefresh,
@@ -262,14 +267,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 10),
-                                Text(
-                                  'OVERDUE ATTENTION REQUIRED (${metrics?.overdue ?? dashboard.overdueAssignments.length})',
-                                  style: const TextStyle(
-                                    color: AppColors.danger,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                    fontFamily: 'monospace',
-                                    letterSpacing: 0.5,
+                                Expanded(
+                                  child: Text(
+                                    'OVERDUE ATTENTION REQUIRED (${metrics?.overdue ?? dashboard.overdueAssignments.length})',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: AppColors.danger,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      fontFamily: 'monospace',
+                                      letterSpacing: 0.5,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -320,7 +328,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       crossAxisCount: 2,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
-                      childAspectRatio: 1.5,
+                      childAspectRatio: 1.25,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       children: [

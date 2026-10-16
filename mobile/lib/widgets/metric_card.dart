@@ -23,7 +23,7 @@ class MetricCard extends StatelessWidget {
     final effectiveAccent = accentColor ?? AppColors.coral;
 
     return ZeroCard(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -31,21 +31,26 @@ class MetricCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                label.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.darkTextSecondary,
-                  letterSpacing: 0.6,
+              Expanded(
+                child: Text(
+                  label.toUpperCase(),
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.darkTextSecondary,
+                    letterSpacing: 0.6,
+                  ),
                 ),
               ),
-              if (icon != null)
+              if (icon != null) ...[
+                const SizedBox(width: 4),
                 Icon(
                   icon,
                   size: 16,
                   color: effectiveAccent,
                 ),
+              ],
             ],
           ),
           const SizedBox(height: 12),

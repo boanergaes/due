@@ -38,6 +38,9 @@ class ApiConfig {
   static String get login => '$baseUrl/auth/login';
   static String get register => '$baseUrl/auth/register';
   static String get user => '$baseUrl/auth/user';
+  static String get profile => '$baseUrl/auth/profile';
+  static String get password => '$baseUrl/auth/password';
+  static String get deleteAccount => '$baseUrl/auth/account';
   static String get logout => '$baseUrl/auth/logout';
   static String get appearance => '$baseUrl/auth/appearance';
 
@@ -58,4 +61,29 @@ class ApiConfig {
       '$baseUrl/assignments/$assignmentId/notes';
   static String assignmentNoteDetail(int assignmentId, int noteId) =>
       '$baseUrl/assignments/$assignmentId/notes/$noteId';
+
+  // Subscription & Storage endpoints
+  static String get subscription => '$baseUrl/subscription';
+  static String get subscriptionCheckout => '$baseUrl/subscription/checkout';
+  static String get subscriptionCancel => '$baseUrl/subscription/cancel';
+
+  // Study Resources endpoints
+  static String get resources => '$baseUrl/resources';
+  static String resourceDetail(int id) => '$baseUrl/resources/$id';
+  static String resourceView(int id) => '$baseUrl/resources/$id/view';
+  static String resourceDownload(int id) => '$baseUrl/resources/$id/download';
+
+  // Global Due Copilot (AI) endpoints
+  static String get aiMentionables => '$baseUrl/ai/mentionables';
+  static String get aiMessages => '$baseUrl/ai/messages';
+  static String get aiChat => '$baseUrl/ai/chat';
+  static String get aiHistory => '$baseUrl/ai/history';
+
+  // Assignment-scoped Gemini AI Study Assistant endpoints
+  static String assignmentAiMessages(int assignmentId) =>
+      '$baseUrl/assignments/$assignmentId/ai/messages';
+  static String assignmentAiChat(int assignmentId) =>
+      '$baseUrl/assignments/$assignmentId/ai/chat';
+  static String assignmentAiHistory(int assignmentId) =>
+      '$baseUrl/assignments/$assignmentId/ai/history';
 }

@@ -48,6 +48,31 @@ class TokenStorage {
     }
   }
 
+  static const String _baseUrlKey = 'due_custom_api_base_url';
+
+  /// Save custom API base URL
+  Future<void> saveBaseUrl(String url) async {
+    _memoryFallback[_baseUrlKey] = url;
+    if (_storage != null) {
+      try {
+        await _storage.write(key: _baseUrlKey, value: url).timeout(const Duration(milliseconds: 500));
+      } catch (_) {}
+    }
+  }
+
+  /// Retrieve stored custom API base URL
+  Future<String?> getBaseUrl() async {
+    if (_storage == null) {
+      return _memoryFallback[_baseUrlKey];
+    }
+    try {
+      final val = await _storage.read(key: _baseUrlKey).timeout(const Duration(milliseconds: 500));
+      return val ?? _memoryFallback[_baseUrlKey];
+    } catch (_) {
+      return _memoryFallback[_baseUrlKey];
+    }
+  }
+
   /// Check whether a token exists
   Future<bool> hasToken() async {
     final token = await getToken();

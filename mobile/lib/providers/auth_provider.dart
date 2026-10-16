@@ -214,6 +214,90 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Update user name and email
+  Future<bool> updateProfile({required String name, required String email}) async {
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await apiClient.put(
+        ApiConfig.profile,
+        body: {'name': name, 'email': email},
+      );
+
+      if (response != null && response['user'] != null) {
+        _user = User.fromJson(response['user'] as Map<String, dynamic>);
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _errorMessage = 'Failed to update profile. Check your network.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Update account password
+  Future<bool> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await apiClient.put(
+        ApiConfig.password,
+        body: {
+          'current_password': currentPassword,
+          'password': newPassword,
+          'password_confirmation': confirmPassword,
+        },
+      );
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _errorMessage = 'Failed to update password. Check your network.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Delete student account permanently
+  Future<bool> deleteAccount({required String password}) async {
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await apiClient.delete(
+        ApiConfig.deleteAccount,
+        body: {'password': password},
+      );
+      await tokenStorage.deleteToken();
+      _user = null;
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _errorMessage = 'Failed to delete account. Check your network.';
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Log out and revoke personal access token
   Future<void> logout() async {
     try {

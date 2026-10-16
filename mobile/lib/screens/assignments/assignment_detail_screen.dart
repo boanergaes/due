@@ -3,12 +3,15 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../models/assignment.dart';
 import '../../models/assignment_note.dart';
+import '../../providers/ai_chat_provider.dart';
 import '../../providers/assignment_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/confirm_dialog.dart';
+import '../../widgets/due_copilot_drawer.dart';
 import '../../widgets/urgency_badge.dart';
 import '../../widgets/zero_button.dart';
 import '../../widgets/zero_card.dart';
+import '../../widgets/resource_list_widget.dart';
 import 'assignment_form_screen.dart';
 import 'note_form_dialog.dart';
 
@@ -199,6 +202,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
     }
 
     return Scaffold(
+      endDrawer: const DueCopilotDrawer(),
       appBar: AppBar(
         title: const Text(
           'ASSIGNMENT DETAIL',
@@ -210,6 +214,16 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
           ),
         ),
         actions: [
+          Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.smart_toy_outlined, color: AppColors.coral),
+              tooltip: 'Due Copilot (Gemini AI)',
+              onPressed: () {
+                context.read<AiChatProvider>().setFocus(assignment.id, title: assignment.title);
+                Scaffold.of(ctx).openEndDrawer();
+              },
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.edit_outlined),
             tooltip: 'Edit Assignment',
@@ -245,24 +259,29 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         if (assignment.courseClass != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.coral.withValues(alpha: 0.12),
-                              border: Border.all(color: AppColors.coral.withValues(alpha: 0.4)),
-                            ),
-                            child: Text(
-                              assignment.courseClass!.courseName,
-                              style: const TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.coral,
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.coral.withValues(alpha: 0.12),
+                                border: Border.all(color: AppColors.coral.withValues(alpha: 0.4)),
+                              ),
+                              child: Text(
+                                assignment.courseClass!.courseName,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                style: const TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.coral,
+                                ),
                               ),
                             ),
                           )
                         else
                           const SizedBox.shrink(),
+                        const SizedBox(width: 8),
                         UrgencyBadge(
                           label: assignment.urgencyLabel,
                           isOverdue: assignment.isOverdue,
@@ -289,11 +308,14 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
                             color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            assignment.courseClass!.teacherName!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          Expanded(
+                            child: Text(
+                              assignment.courseClass!.teacherName!,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                              ),
                             ),
                           ),
                         ],
@@ -442,6 +464,16 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
                           color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
                         ),
                       ),
+              ),
+              const SizedBox(height: 16),
+
+
+
+              // Attached Resources Section
+              ResourceListWidget(
+                resourceableType: 'assignment',
+                resourceableId: assignment.id,
+                title: 'ASSIGNMENT RESOURCES',
               ),
               const SizedBox(height: 16),
 
