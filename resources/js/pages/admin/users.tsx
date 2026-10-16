@@ -58,7 +58,7 @@ interface UsersPageProps {
     roles: Array<{ value: string; label: string }>;
 }
 
-export default function AdminUsers({ users, filters }: UsersPageProps) {
+export default function AdminUsers({ users, filters, tiers, roles }: UsersPageProps) {
     const [searchTerm, setSearchTerm] = useState<string>(filters.search || '');
     const [selectedTier, setSelectedTier] = useState<string>(filters.tier || '');
     const [selectedRole, setSelectedRole] = useState<string>(filters.role || '');
@@ -103,7 +103,7 @@ export default function AdminUsers({ users, filters }: UsersPageProps) {
     const handleOpenTierModal = (user: AdminUserItem) => {
         setTierModalUser(user);
         tierForm.setData({
-            tier: user.subscription_tier === 'premium' ? 'free' : 'premium',
+            tier: user.subscription_tier,
             interval: 'monthly',
         });
     };
@@ -186,6 +186,7 @@ export default function AdminUsers({ users, filters }: UsersPageProps) {
                                 >
                                     <option value="">All Tiers</option>
                                     <option value="free">Free Tier</option>
+                                    <option value="basic">Scholar ($4.99/mo)</option>
                                     <option value="premium">Genius ($9.99/mo)</option>
                                 </select>
 
@@ -247,8 +248,10 @@ export default function AdminUsers({ users, filters }: UsersPageProps) {
                                             const storageLimit = isAdmin
                                                 ? 'Unlimited'
                                                 : user.subscription_tier === 'premium'
-                                                ? '1 GB'
-                                                : '50 MB';
+                                                ? '5 GB'
+                                                : user.subscription_tier === 'basic'
+                                                ? '500 MB'
+                                                : '0 MB';
 
                                             return (
                                                 <tr key={user.id} className="hover:bg-muted/30 transition-colors">
@@ -285,6 +288,13 @@ export default function AdminUsers({ users, filters }: UsersPageProps) {
                                                                 >
                                                                     <Sparkles className="size-3" />
                                                                     GENIUS
+                                                                </Badge>
+                                                            ) : user.subscription_tier === 'basic' ? (
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="border-blue-500/40 bg-blue-500/10 text-blue-500 text-[10px] flex items-center gap-1 font-medium"
+                                                                >
+                                                                    SCHOLAR
                                                                 </Badge>
                                                             ) : (
                                                                 <Badge
@@ -400,12 +410,13 @@ export default function AdminUsers({ users, filters }: UsersPageProps) {
                                 onChange={(e) => tierForm.setData('tier', e.target.value)}
                                 className="w-full h-9 px-3 rounded-md bg-background border border-input text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                             >
-                                <option value="free">Free Tier (50MB storage, no AI)</option>
-                                <option value="premium">Genius Tier (1GB storage, Gemini AI assistant)</option>
+                                <option value="free">Free Tier (Core coursework, 0 MB resources, no AI)</option>
+                                <option value="basic">Scholar Tier (500 MB storage, coursework resources, in-app viewers)</option>
+                                <option value="premium">Genius Tier (5 GB storage, resources, Gemini AI copilot)</option>
                             </select>
                         </div>
 
-                        {tierForm.data.tier === 'premium' && (
+                        {tierForm.data.tier !== 'free' && (
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-medium text-foreground">
                                     Simulated Billing Interval
@@ -415,8 +426,12 @@ export default function AdminUsers({ users, filters }: UsersPageProps) {
                                     onChange={(e) => tierForm.setData('interval', e.target.value)}
                                     className="w-full h-9 px-3 rounded-md bg-background border border-input text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                                 >
-                                    <option value="monthly">Monthly ($9.99/mo)</option>
-                                    <option value="yearly">Yearly ($99.99/yr)</option>
+                                    <option value="monthly">
+                                        Monthly ({tierForm.data.tier === 'premium' ? '$9.99/mo' : '$4.99/mo'})
+                                    </option>
+                                    <option value="yearly">
+                                        Yearly ({tierForm.data.tier === 'premium' ? '$99.00/yr' : '$49.00/yr'})
+                                    </option>
                                 </select>
                             </div>
                         )}

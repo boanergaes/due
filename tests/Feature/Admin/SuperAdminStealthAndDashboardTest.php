@@ -111,6 +111,29 @@ test('super admin can override user subscription tier to genius', function () {
     expect($activeSub->price)->toBe(9.99);
 });
 
+test('super admin can override user subscription tier to basic (scholar)', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $student = User::factory()->create([
+        'subscription_tier' => SubscriptionTier::Free,
+    ]);
+
+    $response = $this->actingAs($admin)->patch("/admin/users/{$student->id}/tier", [
+        'tier' => 'basic',
+        'interval' => 'monthly',
+    ]);
+
+    $response->assertSessionHas('success');
+
+    $student->refresh();
+    expect($student->subscription_tier)->toBe(SubscriptionTier::Basic);
+    expect($student->subscription_expires_at)->not->toBeNull();
+
+    $activeSub = $student->subscriptions()->where('status', SubscriptionStatus::Active)->first();
+    expect($activeSub)->not->toBeNull();
+    expect($activeSub->tier)->toBe(SubscriptionTier::Basic);
+    expect($activeSub->price)->toBe(4.99);
+});
+
 test('super admin can override user subscription tier to free', function () {
     $admin = User::factory()->create(['role' => UserRole::Admin]);
     $student = User::factory()->create([

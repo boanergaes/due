@@ -22,6 +22,7 @@ class AdminStatsService
     {
         $totalUsers = User::count();
         $geniusUsers = User::where('subscription_tier', SubscriptionTier::Premium)->count();
+        $scholarUsers = User::where('subscription_tier', SubscriptionTier::Basic)->count();
         $freeUsers = User::where('subscription_tier', SubscriptionTier::Free)->count();
         $admins = User::where('role', UserRole::Admin)->count();
 
@@ -48,6 +49,7 @@ class AdminStatsService
         return [
             'total_users' => $totalUsers,
             'genius_users' => $geniusUsers,
+            'scholar_users' => $scholarUsers,
             'free_users' => $freeUsers,
             'admins' => $admins,
             'super_admins' => $admins,

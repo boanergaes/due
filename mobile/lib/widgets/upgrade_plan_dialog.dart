@@ -63,6 +63,52 @@ class _UpgradePlanDialogState extends State<UpgradePlanDialog> {
   }
 
   Future<void> _handleCheckout() async {
+    final subProvider = context.read<SubscriptionProvider>();
+
+    if (_selectedTier == 'free') {
+      setState(() {
+        _step = 1;
+        _processingStage = 'Updating to Free Tier...';
+      });
+
+      await Future.delayed(const Duration(milliseconds: 350));
+      if (!mounted) return;
+
+      final success = await subProvider.cancelSubscription();
+      if (!mounted) return;
+
+      if (success) {
+        Navigator.of(context).pop(true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Account active on Free tier.',
+              style: TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          ),
+        );
+      } else {
+        setState(() {
+          _step = 0;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              subProvider.errorMessage ?? 'Failed to switch to Free tier',
+              style: const TextStyle(fontFamily: 'monospace'),
+            ),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() {
       _step = 1;
       _processingStage = 'Authorizing Card...';
@@ -86,7 +132,6 @@ class _UpgradePlanDialogState extends State<UpgradePlanDialog> {
     final expMonth = expParts.isNotEmpty ? expParts[0].trim() : '12';
     final expYear = expParts.length > 1 ? expParts[1].trim() : '28';
 
-    final subProvider = context.read<SubscriptionProvider>();
     final success = await subProvider.checkout(
       tier: _selectedTier,
       interval: _selectedInterval,
@@ -142,7 +187,7 @@ class _UpgradePlanDialogState extends State<UpgradePlanDialog> {
       ),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
+        constraints: const BoxConstraints(maxWidth: 540),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: _step == 1
@@ -235,124 +280,243 @@ class _UpgradePlanDialogState extends State<UpgradePlanDialog> {
         ),
         const SizedBox(height: 16),
 
-        // Interval Toggle (Monthly / Annual)
-        Row(
-          children: [
-            Expanded(
-              child: _buildIntervalSegment('monthly', 'MONTHLY BILLING', isDark),
+        // Plan Dropdown Selector
+        const Text(
+          'SUBSCRIPTION PLAN',
+          style: TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.8,
+            color: AppColors.darkTextSecondary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+            border: Border.all(
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              width: 1,
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildIntervalSegment('annual', 'ANNUAL (SAVE 18%)', isDark),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedTier,
+              isExpanded: true,
+              dropdownColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: 'free',
+                  child: Text('Free Tier (\$0.00 — Core Coursework)'),
+                ),
+                DropdownMenuItem(
+                  value: 'basic',
+                  child: Text('Scholar Tier (\$4.99/mo or \$49.00/yr — 500 MB Storage)'),
+                ),
+                DropdownMenuItem(
+                  value: 'premium',
+                  child: Text('Genius Tier (\$9.99/mo or \$99.00/yr — Gemini AI + 5 GB)'),
+                ),
+              ],
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() => _selectedTier = val);
+                }
+              },
             ),
-          ],
+          ),
         ),
         const SizedBox(height: 14),
 
-        // Tier Selection Cards
-        Row(
-          children: [
-            Expanded(
-              child: _buildTierCard(
-                tier: 'basic',
-                name: 'SCHOLAR',
-                price: _selectedInterval == 'monthly' ? '\$4.99' : '\$49.00',
-                period: _selectedInterval == 'monthly' ? '/mo' : '/yr',
-                badge: 'RESOURCES',
-                features: ['Unlimited Files', '500 MB Storage', 'In-App Viewers'],
-                isDark: isDark,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildTierCard(
-                tier: 'premium',
-                name: 'GENIUS',
-                price: _selectedInterval == 'monthly' ? '\$9.99' : '\$99.00',
-                period: _selectedInterval == 'monthly' ? '/mo' : '/yr',
-                badge: 'GEMINI AI',
-                features: ['All Scholar perks', 'Gemini AI Copilot', '5 GB Fast Storage'],
-                isDark: isDark,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Simulated Test Payment Form
-        ZeroCard(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        // Interval Toggle (Monthly / Annual) - only relevant for paid plans
+        if (_selectedTier != 'free') ...[
+          Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'TEST PAYMENT METHOD',
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    color: AppColors.coral.withValues(alpha: 0.15),
-                    child: const Text(
-                      'SIMULATED',
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 9,
-                        color: AppColors.coral,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
+              Expanded(
+                child: _buildIntervalSegment('monthly', 'MONTHLY BILLING', isDark),
               ),
-              const SizedBox(height: 10),
-              ZeroTextField(
-                label: 'CARDHOLDER NAME',
-                controller: _cardholderController,
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildIntervalSegment('annual', 'ANNUAL (SAVE 18%)', isDark),
               ),
-              const SizedBox(height: 8),
-              ZeroTextField(
-                label: 'CARD NUMBER',
-                controller: _cardNumberController,
-                prefixIcon: const Icon(Icons.credit_card, size: 16),
+            ],
+          ),
+          const SizedBox(height: 14),
+        ],
+
+        // 3 Tier Selection Cards (Horizontally Scrollable)
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 200,
+                child: _buildTierCard(
+                  tier: 'free',
+                  name: 'FREE',
+                  price: '\$0.00',
+                  period: ' forever',
+                  badge: 'CORE',
+                  features: const ['Coursework Tracking', 'Deadline Alarms', 'Study Notes'],
+                  isDark: isDark,
+                ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: ZeroTextField(
-                      label: 'EXPIRY',
-                      hintText: 'MM/YY',
-                      controller: _expController,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ZeroTextField(
-                      label: 'CVC',
-                      hintText: '123',
-                      controller: _cvcController,
-                    ),
-                  ),
-                ],
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 200,
+                child: _buildTierCard(
+                  tier: 'basic',
+                  name: 'SCHOLAR',
+                  price: _selectedInterval == 'monthly' ? '\$4.99' : '\$49.00',
+                  period: _selectedInterval == 'monthly' ? '/mo' : '/yr',
+                  badge: 'RESOURCES',
+                  features: const ['Unlimited Files', '500 MB Storage', 'In-App Viewers'],
+                  isDark: isDark,
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 200,
+                child: _buildTierCard(
+                  tier: 'premium',
+                  name: 'GENIUS',
+                  price: _selectedInterval == 'monthly' ? '\$9.99' : '\$99.00',
+                  period: _selectedInterval == 'monthly' ? '/mo' : '/yr',
+                  badge: 'GEMINI AI',
+                  features: const ['All Scholar perks', 'Gemini AI Copilot', '5 GB Fast Storage'],
+                  isDark: isDark,
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
 
+        if (_selectedTier != 'free') ...[
+          // Simulated Test Payment Form
+          ZeroCard(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'TEST PAYMENT METHOD',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      color: AppColors.coral.withValues(alpha: 0.15),
+                      child: const Text(
+                        'SIMULATED',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 9,
+                          color: AppColors.coral,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ZeroTextField(
+                  label: 'CARDHOLDER NAME',
+                  controller: _cardholderController,
+                ),
+                const SizedBox(height: 8),
+                ZeroTextField(
+                  label: 'CARD NUMBER',
+                  controller: _cardNumberController,
+                  prefixIcon: const Icon(Icons.credit_card, size: 16),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ZeroTextField(
+                        label: 'EXPIRY',
+                        hintText: 'MM/YY',
+                        controller: _expController,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ZeroTextField(
+                        label: 'CVC',
+                        hintText: '123',
+                        controller: _cvcController,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ] else ...[
+          ZeroCard(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      color: AppColors.coral,
+                      margin: const EdgeInsets.only(right: 6),
+                    ),
+                    const Text(
+                      'FREE TIER ACTIVE FEATURES',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Core coursework deadlines, assignment tracking, and study notes. No credit card or payment required.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.4,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+
         // Submit Button
         ZeroButton(
           label: _selectedTier == 'premium'
               ? 'ACTIVATE GENIUS TIER'
-              : 'ACTIVATE SCHOLAR TIER',
+              : _selectedTier == 'basic'
+                  ? 'ACTIVATE SCHOLAR TIER'
+                  : 'ACTIVATE FREE TIER',
           icon: Icons.bolt,
           onPressed: _handleCheckout,
         ),
@@ -421,15 +585,19 @@ class _UpgradePlanDialogState extends State<UpgradePlanDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: isSelected ? AppColors.coral : null,
+                Expanded(
+                  child: Text(
+                    name,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: isSelected ? AppColors.coral : null,
+                    ),
                   ),
                 ),
+                const SizedBox(width: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                   decoration: BoxDecoration(
@@ -460,12 +628,16 @@ class _UpgradePlanDialogState extends State<UpgradePlanDialog> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
-                  period,
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 10,
-                    color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    period,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10,
+                      color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                    ),
                   ),
                 ),
               ],

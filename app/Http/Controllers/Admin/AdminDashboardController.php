@@ -90,7 +90,7 @@ class AdminDashboardController extends Controller
         SubscriptionService $subscriptionService
     ): RedirectResponse {
         $validated = $request->validate([
-            'tier' => ['required', 'string', 'in:free,premium'],
+            'tier' => ['required', 'string', 'in:free,basic,premium'],
             'interval' => ['nullable', 'string', 'in:monthly,yearly'],
         ]);
 
@@ -106,7 +106,25 @@ class AdminDashboardController extends Controller
                 'user_id' => $user->id,
                 'tier' => SubscriptionTier::Premium,
                 'status' => SubscriptionStatus::Active,
-                'price' => $validated['interval'] === 'yearly' ? 99.99 : 9.99,
+                'price' => $validated['interval'] === 'yearly' ? 99.00 : 9.99,
+                'interval' => $validated['interval'] ?? 'monthly',
+                'card_brand' => 'admin_override',
+                'card_last_four' => '9999',
+                'mock_transaction_id' => 'adm_'.Str::random(18),
+                'starts_at' => now(),
+                'ends_at' => now()->addYear(),
+            ]);
+        } elseif ($newTier === SubscriptionTier::Basic) {
+            $user->subscription_tier = SubscriptionTier::Basic;
+            $user->subscription_expires_at = now()->addYear();
+            $user->save();
+
+            // Create or update mock subscription record for telemetry & audit
+            Subscription::create([
+                'user_id' => $user->id,
+                'tier' => SubscriptionTier::Basic,
+                'status' => SubscriptionStatus::Active,
+                'price' => $validated['interval'] === 'yearly' ? 49.00 : 4.99,
                 'interval' => $validated['interval'] ?? 'monthly',
                 'card_brand' => 'admin_override',
                 'card_last_four' => '9999',
