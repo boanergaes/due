@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show SocketException;
 import 'package:http/http.dart' as http;
+import 'device_service.dart';
 import 'token_storage.dart';
 
 class ApiException implements Exception {
@@ -41,6 +42,11 @@ class ApiClient {
     final token = await _tokenStorage.getToken();
     if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
+    }
+
+    final deviceName = DeviceService.currentName;
+    if (deviceName.isNotEmpty && deviceName != DeviceService.fallbackDeviceName) {
+      headers['X-Device-Name'] = deviceName;
     }
 
     return headers;

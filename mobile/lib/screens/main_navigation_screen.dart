@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/subscription_provider.dart';
@@ -31,6 +32,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.justAuthenticated) {
+        authProvider.dismissAuthPassport();
+      }
+    });
   }
 
   void _onTabSelected(int index) {
@@ -208,6 +216,30 @@ class _SettingsScreenState extends State<_SettingsScreen> {
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  String _maskToken(String? token) {
+    if (token == null || token.trim().isEmpty) {
+      return '••••...••••';
+    }
+    final trimmed = token.trim();
+    if (trimmed.contains('|')) {
+      final parts = trimmed.split('|');
+      final idPrefix = parts[0];
+      final secret = parts.sublist(1).join('|');
+      if (secret.length > 8) {
+        final prefix = secret.substring(0, 4);
+        final suffix = secret.substring(secret.length - 4);
+        return '$idPrefix|$prefix...$suffix';
+      }
+      return '$idPrefix|••••...••••';
+    }
+    if (trimmed.length > 8) {
+      final prefix = trimmed.substring(0, 4);
+      final suffix = trimmed.substring(trimmed.length - 4);
+      return '$prefix...$suffix';
+    }
+    return '••••...••••';
   }
 
   Future<void> _handleUpdateProfile() async {
@@ -690,6 +722,172 @@ class _SettingsScreenState extends State<_SettingsScreen> {
                     variant: ZeroButtonVariant.outline,
                     icon: Icons.lock_outline,
                     onPressed: _isUpdatingPassword ? null : _handleUpdatePassword,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Section 3: Active Device & Session Token
+            ZeroCard(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'ACTIVE DEVICE & TOKEN',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        color: AppColors.success.withValues(alpha: 0.12),
+                        child: const Text(
+                          'ACTIVE',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.success,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Your authenticated mobile device and active session token.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+                      border: Border.all(
+                        color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'DEVICE:',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.darkTextSecondary,
+                              ),
+                            ),
+                            Text(
+                              authProvider.currentDeviceName,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'SUBSCRIPTION LEVEL:',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.darkTextSecondary,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                              color: subProvider.isGenius
+                                  ? AppColors.coral.withValues(alpha: 0.15)
+                                  : subProvider.isScholar
+                                      ? AppColors.info.withValues(alpha: 0.15)
+                                      : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                              child: Text(
+                                'TIER: ${subProvider.tier.toUpperCase()}',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: subProvider.isGenius
+                                      ? AppColors.coral
+                                      : subProvider.isScholar
+                                          ? AppColors.info
+                                          : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'SESSION TOKEN:',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.darkTextSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.grey.withValues(alpha: 0.1),
+                          child: Text(
+                            (authProvider.currentToken != null && authProvider.currentToken!.isNotEmpty)
+                                ? _maskToken(authProvider.currentToken)
+                                : 'Session Active (••••...••••)',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  ZeroButton(
+                    label: 'COPY TOKEN',
+                    icon: Icons.copy,
+                    variant: ZeroButtonVariant.outline,
+                    onPressed: () {
+                      final token = authProvider.currentToken ?? '';
+                      if (token.isNotEmpty) {
+                        Clipboard.setData(ClipboardData(text: token));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Token copied to clipboard!'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
                   ),
                 ],
               ),

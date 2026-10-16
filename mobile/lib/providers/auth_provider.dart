@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../config/api_config.dart';
 import '../models/user.dart';
 import '../services/api_client.dart';
+import '../services/device_service.dart';
 import '../services/token_storage.dart';
 import 'theme_provider.dart';
 
@@ -20,6 +21,11 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus _status = AuthStatus.uninitialized;
   User? _user;
   String? _errorMessage;
+  String? _currentToken;
+  String? _currentDeviceName;
+  Map<String, dynamic>? _currentPassport;
+  Map<String, dynamic>? _currentTokenPayload;
+  bool _justAuthenticated = false;
 
   AuthProvider({
     required this.apiClient,
@@ -32,16 +38,31 @@ class AuthProvider extends ChangeNotifier {
     apiClient.onUnauthenticated = _handleUnauthenticated;
   }
 
-
-
   AuthStatus get status => _status;
   User? get user => _user;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   bool get isLoading => _status == AuthStatus.authenticating;
+  String? get currentToken => _currentToken;
+  String get currentDeviceName => _currentDeviceName ?? DeviceService.fallbackDeviceName;
+  Map<String, dynamic>? get currentPassport => _currentPassport;
+  Map<String, dynamic>? get currentTokenPayload => _currentTokenPayload;
+  bool get justAuthenticated => _justAuthenticated;
+
+  void dismissAuthPassport() {
+    _justAuthenticated = false;
+    notifyListeners();
+  }
+
+  static String get defaultDeviceName => DeviceService.fallbackDeviceName;
 
   void _handleUnauthenticated() {
     _user = null;
+    _currentToken = null;
+    _currentDeviceName = null;
+    _currentPassport = null;
+    _currentTokenPayload = null;
+    _justAuthenticated = false;
     _status = AuthStatus.unauthenticated;
     _errorMessage = 'Session expired. Please log in again.';
     notifyListeners();
@@ -57,14 +78,25 @@ class AuthProvider extends ChangeNotifier {
     try {
       final hasToken = await tokenStorage.hasToken();
       if (!hasToken) {
+        _currentToken = null;
         _status = AuthStatus.unauthenticated;
         notifyListeners();
         return;
       }
 
+      _currentToken = await tokenStorage.getToken();
+      try {
+        final detected = await DeviceService.getDeviceName();
+        _currentDeviceName = detected;
+      } catch (_) {}
+
       final response = await apiClient.get(ApiConfig.user);
       if (response != null && response['user'] != null) {
         _user = User.fromJson(response['user'] as Map<String, dynamic>);
+        if (response['device_name'] != null &&
+            (response['device_name'] as String).isNotEmpty) {
+          _currentDeviceName = response['device_name'] as String;
+        }
         _status = AuthStatus.authenticated;
         _errorMessage = null;
 
@@ -74,12 +106,14 @@ class AuthProvider extends ChangeNotifier {
         }
       } else {
         await tokenStorage.deleteToken();
+        _currentToken = null;
         _status = AuthStatus.unauthenticated;
       }
     } catch (_) {
       try {
         await tokenStorage.deleteToken();
       } catch (_) {}
+      _currentToken = null;
       _status = AuthStatus.unauthenticated;
     }
 
@@ -97,17 +131,28 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final detected = await DeviceService.getDeviceName();
+      final targetDeviceName = (deviceName != null &&
+              deviceName.isNotEmpty &&
+              deviceName != DeviceService.fallbackDeviceName)
+          ? deviceName
+          : detected;
       final response = await apiClient.post(
         ApiConfig.login,
         body: {
           'email': email,
           'password': password,
-          'device_name': deviceName ?? 'Due Mobile',
+          'device_name': targetDeviceName,
         },
       );
 
       final token = response['token'] as String;
       await tokenStorage.saveToken(token);
+      _currentToken = token;
+      _currentDeviceName = response['device_name'] as String? ?? targetDeviceName;
+      _currentPassport = response['passport'] as Map<String, dynamic>?;
+      _currentTokenPayload = response['payload'] as Map<String, dynamic>?;
+      _justAuthenticated = true;
 
       _user = User.fromJson(response['user'] as Map<String, dynamic>);
       _status = AuthStatus.authenticated;
@@ -146,6 +191,12 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final detected = await DeviceService.getDeviceName();
+      final targetDeviceName = (deviceName != null &&
+              deviceName.isNotEmpty &&
+              deviceName != DeviceService.fallbackDeviceName)
+          ? deviceName
+          : detected;
       final response = await apiClient.post(
         ApiConfig.register,
         body: {
@@ -153,12 +204,17 @@ class AuthProvider extends ChangeNotifier {
           'email': email,
           'password': password,
           'password_confirmation': passwordConfirmation,
-          'device_name': deviceName ?? 'Due Mobile',
+          'device_name': targetDeviceName,
         },
       );
 
       final token = response['token'] as String;
       await tokenStorage.saveToken(token);
+      _currentToken = token;
+      _currentDeviceName = response['device_name'] as String? ?? targetDeviceName;
+      _currentPassport = response['passport'] as Map<String, dynamic>?;
+      _currentTokenPayload = response['payload'] as Map<String, dynamic>?;
+      _justAuthenticated = true;
 
       _user = User.fromJson(response['user'] as Map<String, dynamic>);
       _status = AuthStatus.authenticated;
@@ -307,6 +363,11 @@ class AuthProvider extends ChangeNotifier {
     }
 
     await tokenStorage.deleteToken();
+    _currentToken = null;
+    _currentDeviceName = null;
+    _currentPassport = null;
+    _currentTokenPayload = null;
+    _justAuthenticated = false;
     _user = null;
     _status = AuthStatus.unauthenticated;
     _errorMessage = null;

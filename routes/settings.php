@@ -31,6 +31,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/sessions', [SessionController::class, 'edit'])->name('sessions.edit');
     Route::delete('settings/sessions/others', [SessionController::class, 'destroyOtherSessions'])->name('sessions.destroy-others');
     Route::delete('settings/sessions/{sessionId}', [SessionController::class, 'destroySession'])->name('sessions.destroy');
+    Route::delete('settings/devices/all', [SessionController::class, 'destroyAllDeviceTokens'])->name('devices.destroy-all');
+    Route::delete('settings/devices/{tokenId}', [SessionController::class, 'destroyDeviceToken'])->name('devices.destroy');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {

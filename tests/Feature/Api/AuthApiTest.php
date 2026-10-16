@@ -73,10 +73,33 @@ class AuthApiTest extends TestCase
         $response->assertJsonStructure([
             'message',
             'token',
+            'token_id',
+            'device_name',
+            'subscription_tier',
+            'subscription_tier_label',
+            'passport' => ['uid', 'tier', 'features', 'signature'],
+            'payload' => ['uid', 'tier', 'features', 'device'],
             'user' => ['id', 'name', 'email', 'appearance'],
         ]);
 
         $this->assertNotNull($response->json('token'));
+        $this->assertEquals('iPhone 15', $response->json('device_name'));
+        $this->assertEquals('free', $response->json('subscription_tier'));
+
+        // Verify the subscription tier is encoded directly in the plain text token string
+        $token = $response->json('token');
+        $this->assertStringContainsString('|', $token);
+        $this->assertStringContainsString('.', $token);
+
+        // Decode the payload from the token string
+        [$tokenId, $secretAndPayload] = explode('|', $token, 2);
+        [$secret, $encodedPayload] = explode('.', $secretAndPayload, 2);
+        $decoded = json_decode(base64_decode(strtr($encodedPayload, '-_', '+/')), true);
+
+        $this->assertIsArray($decoded);
+        $this->assertEquals('free', $decoded['tier']);
+        $this->assertEquals('Free', $decoded['tier_label']);
+        $this->assertEquals('iPhone 15', $decoded['device']);
     }
 
     public function test_login_fails_with_invalid_password(): void
@@ -130,5 +153,64 @@ class AuthApiTest extends TestCase
         $response->assertOk();
 
         $this->assertCount(0, $user->fresh()->tokens);
+    }
+
+    public function test_user_can_login_with_x_device_name_header(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'samsung@example.com',
+            'password' => Hash::make('password123'),
+        ]);
+
+        $response = $this->withHeader('X-Device-Name', 'Samsung SM-A165F')
+            ->postJson('/api/v1/auth/login', [
+                'email' => 'samsung@example.com',
+                'password' => 'password123',
+            ]);
+
+        $response->assertOk();
+        $this->assertEquals('Samsung SM-A165F', $response->json('device_name'));
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'tokenable_id' => $user->id,
+            'name' => 'Samsung SM-A165F',
+        ]);
+    }
+
+    public function test_user_endpoint_syncs_device_name_from_header(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('Due Mobile')->plainTextToken;
+
+        $response = $this->withToken($token)
+            ->withHeader('X-Device-Name', 'Samsung SM-A165F')
+            ->getJson('/api/v1/auth/user');
+
+        $response->assertOk();
+        $this->assertEquals('Samsung SM-A165F', $response->json('device_name'));
+
+        // Verify token name was updated in DB from Due Mobile to Samsung SM-A165F
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'tokenable_id' => $user->id,
+            'name' => 'Samsung SM-A165F',
+        ]);
+    }
+
+    public function test_user_can_explicitly_sync_device_name(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('Due Mobile')->plainTextToken;
+
+        $response = $this->withToken($token)
+            ->postJson('/api/v1/auth/sync-device', [
+                'device_name' => 'Samsung SM-A165F',
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('device_name', 'Samsung SM-A165F');
+
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'tokenable_id' => $user->id,
+            'name' => 'Samsung SM-A165F',
+        ]);
     }
 }

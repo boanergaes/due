@@ -39,6 +39,57 @@ class SubscriptionService
     }
 
     /**
+     * Generate a Sanctum token with the user's subscription passport and tier encoded in its payload.
+     *
+     * @return array{token: string, token_id: int, device_name: string, payload: array<string, mixed>, passport: array<string, mixed>}
+     */
+    public function createPassportToken(User $user, string $deviceName = 'Due Mobile'): array
+    {
+        $passport = $this->generatePassport($user);
+        $tier = $user->subscription_tier->value;
+        $tierLabel = $user->subscription_tier->label();
+
+        $tokenPayload = [
+            'uid' => $user->id,
+            'role' => $user->role->value,
+            'tier' => $tier,
+            'tier_label' => $tierLabel,
+            'features' => $passport['features'],
+            'storage_limit_bytes' => $user->storageLimitBytes(),
+            'iat' => now()->timestamp,
+            'exp' => $user->subscription_expires_at?->timestamp,
+            'device' => $deviceName,
+        ];
+
+        // Base64URL-encoded payload for self-contained token claims
+        $encodedPayload = rtrim(strtr(base64_encode(json_encode($tokenPayload, JSON_UNESCAPED_SLASHES)), '+/', '-_'), '=');
+        $tokenSecret = Str::random(40);
+        $plainTextValue = "{$tokenSecret}.{$encodedPayload}";
+
+        $abilities = array_values(array_unique(array_merge(
+            ["tier:{$tier}", "tier_label:{$tierLabel}"],
+            $passport['features']
+        )));
+
+        $tokenModel = $user->tokens()->create([
+            'name' => $deviceName,
+            'token' => hash('sha256', $plainTextValue),
+            'abilities' => $abilities,
+        ]);
+
+        $bearerToken = "{$tokenModel->id}|{$plainTextValue}";
+        $tokenModel->forceFill(['plain_token' => $bearerToken])->save();
+
+        return [
+            'token' => $bearerToken,
+            'token_id' => $tokenModel->id,
+            'device_name' => $deviceName,
+            'payload' => $tokenPayload,
+            'passport' => $passport,
+        ];
+    }
+
+    /**
      * Verify whether a given passport has a valid HMAC signature and matches the user.
      *
      * @param  array<string, mixed>|null  $passport

@@ -20,6 +20,7 @@ Route::prefix('v1')->as('api.v1.')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         // User Profile, Preferences & Logout
         Route::get('auth/user', [AuthController::class, 'user']);
+        Route::post('auth/sync-device', [AuthController::class, 'syncDevice']);
         Route::put('auth/profile', [AuthController::class, 'updateProfile']);
         Route::put('auth/password', [AuthController::class, 'updatePassword']);
         Route::delete('auth/account', [AuthController::class, 'deleteAccount']);

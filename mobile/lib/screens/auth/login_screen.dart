@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/device_service.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/zero_button.dart';
 import '../../widgets/zero_card.dart';
@@ -31,9 +32,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = context.read<AuthProvider>();
+    final deviceName = await DeviceService.getDeviceName();
     await authProvider.login(
       email: _emailController.text.trim(),
       password: _passwordController.text,
+      deviceName: deviceName,
     );
   }
 
@@ -173,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 24),
 
                     // Submit Button
                     ZeroButton(

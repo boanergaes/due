@@ -13,6 +13,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/splash_screen.dart';
 import 'services/api_client.dart';
+import 'services/device_service.dart';
 import 'services/token_storage.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
@@ -21,6 +22,7 @@ import 'widgets/zero_card.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await DeviceService.getDeviceName();
 
   final tokenStorage = TokenStorage();
   final savedBaseUrl = await tokenStorage.getBaseUrl();

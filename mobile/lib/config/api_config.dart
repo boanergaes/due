@@ -38,6 +38,7 @@ class ApiConfig {
   static String get login => '$baseUrl/auth/login';
   static String get register => '$baseUrl/auth/register';
   static String get user => '$baseUrl/auth/user';
+  static String get syncDevice => '$baseUrl/auth/sync-device';
   static String get profile => '$baseUrl/auth/profile';
   static String get password => '$baseUrl/auth/password';
   static String get deleteAccount => '$baseUrl/auth/account';

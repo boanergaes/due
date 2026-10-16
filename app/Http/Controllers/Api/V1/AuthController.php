@@ -33,15 +33,28 @@ class AuthController extends Controller
             ]);
         }
 
-        $deviceName = $validated['device_name'] ?? 'due_mobile_client';
+        $headerDevice = $request->header('X-Device-Name');
+        $deviceName = $validated['device_name'] ?? null;
+        if (empty($deviceName) || $deviceName === 'Due Mobile') {
+            $deviceName = $headerDevice ?: ($deviceName ?: 'Due Mobile');
+        }
+
+        // Prune previous tokens for this device to prevent redundant device entries
+        $user->tokens()->where('name', $deviceName)->delete();
+
         $subscriptionService = app(SubscriptionService::class);
-        $abilities = $subscriptionService->getSanctumAbilities($user);
-        $token = $user->createToken($deviceName, $abilities)->plainTextToken;
+        $passportToken = $subscriptionService->createPassportToken($user, $deviceName);
 
         return response()->json([
             'message' => 'Authenticated successfully',
-            'token' => $token,
-            'abilities' => $abilities,
+            'token' => $passportToken['token'],
+            'token_id' => $passportToken['token_id'],
+            'device_name' => $passportToken['device_name'],
+            'subscription_tier' => $user->subscription_tier->value,
+            'subscription_tier_label' => $user->subscription_tier->label(),
+            'passport' => $passportToken['passport'],
+            'payload' => $passportToken['payload'],
+            'abilities' => $passportToken['payload']['features'],
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -76,15 +89,28 @@ class AuthController extends Controller
             'email_verified_at' => now(), // Option A: auto-verified
         ]);
 
-        $deviceName = $validated['device_name'] ?? 'due_mobile_client';
+        $headerDevice = $request->header('X-Device-Name');
+        $deviceName = $validated['device_name'] ?? null;
+        if (empty($deviceName) || $deviceName === 'Due Mobile') {
+            $deviceName = $headerDevice ?: ($deviceName ?: 'Due Mobile');
+        }
+
+        // Prune previous tokens for this device to prevent redundant device entries
+        $user->tokens()->where('name', $deviceName)->delete();
+
         $subscriptionService = app(SubscriptionService::class);
-        $abilities = $subscriptionService->getSanctumAbilities($user);
-        $token = $user->createToken($deviceName, $abilities)->plainTextToken;
+        $passportToken = $subscriptionService->createPassportToken($user, $deviceName);
 
         return response()->json([
             'message' => 'Account registered successfully',
-            'token' => $token,
-            'abilities' => $abilities,
+            'token' => $passportToken['token'],
+            'token_id' => $passportToken['token_id'],
+            'device_name' => $passportToken['device_name'],
+            'subscription_tier' => $user->subscription_tier->value,
+            'subscription_tier_label' => $user->subscription_tier->label(),
+            'passport' => $passportToken['passport'],
+            'payload' => $passportToken['payload'],
+            'abilities' => $passportToken['payload']['features'],
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -113,11 +139,20 @@ class AuthController extends Controller
     }
 
     /**
-     * Get the authenticated user's profile and summary stats.
+     * Get the authenticated user's profile and summary stats, syncing device name if supplied.
      */
     public function user(Request $request): JsonResponse
     {
         $user = $request->user();
+
+        // If the mobile app provides its real device name via header or query, sync active token name
+        $headerDevice = $request->header('X-Device-Name') ?: $request->query('device_name');
+        if ($headerDevice && $headerDevice !== 'Due Mobile') {
+            $token = $user?->currentAccessToken();
+            if ($token && $token->name !== $headerDevice) {
+                $token->forceFill(['name' => $headerDevice])->save();
+            }
+        }
 
         return response()->json([
             'user' => [
@@ -129,6 +164,27 @@ class AuthController extends Controller
                 'classes_count' => $user->classes()->count(),
                 'assignments_count' => $user->assignments()->count(),
             ],
+            'device_name' => $user?->currentAccessToken()?->name,
+        ]);
+    }
+
+    /**
+     * Explicitly sync the device name of the active mobile token.
+     */
+    public function syncDevice(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'device_name' => ['required', 'string', 'max:100'],
+        ]);
+
+        $token = $request->user()?->currentAccessToken();
+        if ($token && $token->name !== $validated['device_name']) {
+            $token->forceFill(['name' => $validated['device_name']])->save();
+        }
+
+        return response()->json([
+            'message' => 'Device synchronized successfully',
+            'device_name' => $validated['device_name'],
         ]);
     }
 
