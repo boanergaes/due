@@ -1,26 +1,228 @@
 # Due — Academic Assignment & Coursework Tracker
 
-A focused, modern coursework and assignment tracking application built with **Laravel 13**, **React 19**, **Inertia.js 3**, and **MySQL 8**. Engineered with an architectural, edgy aesthetic inspired by [laravel.com](https://laravel.com/) featuring a strict zero corner radius (`rounded-none`) design system and a default dark theme.
+[![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4?style=flat&logo=php&logoColor=white)](https://www.php.net/)
+[![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?style=flat&logo=laravel&logoColor=white)](https://laravel.com/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react&logoColor=black)](https://react.dev/)
+[![Inertia.js](https://img.shields.io/badge/Inertia.js-3-9553E9?style=flat&logo=inertia&logoColor=white)](https://inertiajs.com/)
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?style=flat&logo=flutter&logoColor=white)](https://flutter.dev/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Tests](https://img.shields.io/badge/Pest%20Tests-218%20Passed-22C55E?style=flat&logo=pest&logoColor=white)](https://pestphp.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+A focused, high-performance coursework and deadline management ecosystem built with **Laravel 13**, **React 19**, **Inertia.js 3**, and **Flutter**. Engineered with an architectural, edgy aesthetic inspired by [laravel.com](https://laravel.com/) featuring a strict zero corner radius (`rounded-none` / `BorderRadius.zero`) design system and database-persisted dark mode by default.
 
 ---
 
-## 🚀 Quick Start Guide
+## 📑 Table of Contents
 
-### 1. Prerequisites
-- **PHP:** 8.3 or higher (PHP 8.5 via Herd-lite / CLI)
-- **Composer:** 2.8+
-- **Node.js:** 20+ & npm
-- **Docker & Docker Compose:** For running MySQL 8
+- [Overview & Key Features](#-overview--key-features)
+- [Application Architecture](#-application-architecture)
+- [Technology Stack](#-technology-stack)
+- [Project Structure](#-project-structure)
+- [Prerequisites](#-prerequisites)
+- [Installation & Setup](#-installation--setup)
+  - [1. Backend & Database Setup](#1-backend--database-setup)
+  - [2. Frontend Web Client](#2-frontend-web-client)
+  - [3. Flutter Mobile Client](#3-flutter-mobile-client)
+  - [4. Default Demo Accounts](#4-default-demo-accounts)
+- [Database Management & Inspection](#-database-management--inspection)
+- [Testing & Quality Assurance](#-testing--quality-assurance)
+- [Environment Configuration](#-environment-configuration)
+- [Design System & UI Guidelines](#-design-system--ui-guidelines)
+- [License](#-license)
 
-### 2. Environment & Database Setup
+---
 
-1. **Start the MySQL container:**
+## ✨ Overview & Key Features
+
+### 🎓 Academic Coursework Management
+- **Course Catalog**: Organize academic classes with credit hours (CH), European Credit Transfer System (ECTS) weighting, instructor contact info, and linked coursework counts.
+- **Accidental Deletion Safeguards**: Database-level foreign key restrictions (`restrictOnDelete`) prevent deleting courses that have active assignments, preventing coursework loss.
+
+### ⏱️ Dynamic Deadline & Urgency Engine
+- **Calculated Urgency States**: Coursework is continuously evaluated into 5 distinct urgency categories:
+  - `Overdue` (Past deadline, uncompleted)
+  - `Due Today` (Due within the current calendar day)
+  - `Due Soon` (Due within the next 48 hours)
+  - `Upcoming` (Due further in the future)
+  - `Completed` (Turned in / finished)
+- **Countdown Badges**: Real-time humanized deadline countdowns with high-contrast color indicators.
+- **Multi-Factor Filtering**: Instant filtering by course, completion status, and urgency state.
+
+### 📝 Assignment Notes & Study Logs
+- Attach structured markdown-friendly study notes, assignment requirements, and checklists directly to each assignment.
+
+### 📁 Cloud Storage & In-App Resource Viewers
+- Upload syllabus files, lecture slides, diagrams, and assignment resources (PDF, PNG, JPG, WEBP, TXT).
+- In-browser and in-app document viewer, PDF reader, and image lightbox.
+- Tier-enforced storage quotas and single-file upload size limits.
+
+### 🤖 Due Copilot (Gemini AI Study Tutor)
+- Context-aware AI tutoring sidebar and drawer powered by Google Gemini.
+- Coursework referencing (`@assignment` and course syllabus context) allowing the AI to tutor on specific problem sets and homework prompts.
+- Suggested quick-prompt chips, streaming responses, and markdown code formatting.
+
+### 💳 Tiered Academic Subscriptions
+- **Free Tier ($0.00)**: Full coursework tracking, urgency engine, and study notes.
+- **Scholar Tier ($4.99/mo or $49.00/yr)**: Unlimited course & assignment file uploads, 500 MB cloud storage quota, in-app document viewers.
+- **Genius Tier ($9.99/mo or $99.00/yr)**: Everything in Scholar plus Due Copilot (Gemini AI tutoring) and a 5 GB cloud storage quota.
+- Built-in simulated sandbox checkout, plan upgrades, downgrades, and cancellations.
+
+### 🛡️ Super Admin Control Center
+- **System Telemetry**: Real-time overview of active students, Monthly Recurring Revenue (MRR), total storage used, and AI interaction metrics.
+- **User Management**: Instant search, filter by role (Student / Admin) and tier (Free / Scholar / Genius), role promotion/demotion, and instant subscription tier overrides.
+
+### 📱 Device & Remote Session Management
+- Multi-device active session tracking for both browser cookies and mobile API tokens.
+- Automatic hardware device detection (e.g. Pixel, Galaxy, iPhone model names).
+- Masked token inspection (`...`) and one-click remote session revocation.
+
+---
+
+## 🏛️ Application Architecture
+
+Due is designed around a unified backend architecture serving both an **Inertia.js Single-Page Application (SPA)** for the web and a **RESTful API** for native mobile clients.
+
+```
+                                ┌───────────────────────────────────────────────────┐
+                                │               Laravel 13 Backend                  │
+                                │                                                   │
+                                │  ┌─────────────────────────────────────────────┐  │
+                                │  │           Shared Service Layer              │  │
+                                │  │  • DeadlineUrgencyService                   │  │
+                                │  │  • SubscriptionService & Quotas             │  │
+                                │  │  • ResourceStorageService                   │  │
+                                │  │  • GeminiAiService & Copilot                │  │
+                                │  │  • AdminStatsService                        │  │
+                                │  └──────────────────────┬──────────────────────┘  │
+                                │                         │                         │
+                                │        ┌────────────────┴───────────────┐         │
+                                │        ▼                                ▼         │
+                                │  Inertia Web Controllers        REST API v1       │
+                                │  (Cookie / Fortify Auth)        (Bearer Tokens)   │
+                                └────────┬────────────────────────────────┬─────────┘
+                                         │                                │
+                       X-Inertia JSON Props                        JSON Payloads
+                                         │                                │
+                                         ▼                                ▼
+                              ┌──────────────────────┐        ┌───────────────────────┐
+                              │  React 19 + Inertia  │        │     Flutter 3.x       │
+                              │     Web Frontend     │        │     Mobile Client     │
+                              │  (Tailwind, Monorepo)│        │   (iOS, Android, PWA) │
+                              └──────────────────────┘        └───────────────────────┘
+```
+
+### Architectural Principles
+
+1. **Shared Domain Logic**: All business rules—specifically urgency evaluations, deadline countdowns, storage limits, and feature authorizations—are encapsulated in Laravel Services (`App\Services\*`). Web controllers and mobile API endpoints invoke the identical service layer, guaranteeing 100% parity across web and mobile.
+2. **Unified Data Integrity**: Database foreign key constraints enforce strict isolation by user ID (`$request->user()->id`). Deletions cascade where appropriate, but delete operations on parent courses are restricted if child coursework exists.
+3. **Dual Authentication Strategy**:
+   - **Web Client**: Secure HTTP-only cookies managed by Laravel Fortify with automatic CSRF token verification (`X-XSRF-TOKEN`).
+   - **Mobile Client**: Personal API access tokens managed via Laravel Sanctum/Passport (`Bearer <token>`) stored in secure device storage (`flutter_secure_storage`).
+4. **Zero Client-Side Theme Desynchronization**: Theme settings (`dark`, `light`, `system`) are saved directly in MySQL (`users.appearance`), synchronized via cookie/profile updates, ensuring consistent cross-device appearance without relying on fragile browser `localStorage`.
+
+---
+
+## 💻 Technology Stack
+
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Backend Framework** | Laravel 13 (PHP 8.3+) | Routing, Eloquent ORM, Fortify Auth, API endpoints |
+| **Frontend Framework** | React 19 + TypeScript | Component-based UI with strong typing |
+| **Full-Stack Glue** | Inertia.js 3 | Server-driven routing and state without REST boilerplate |
+| **Mobile Client** | Flutter 3.x (Dart) | Cross-platform native mobile app (Android / iOS) |
+| **Styling & Design** | Tailwind CSS + Lucide Icons | Zero-radius design system, custom CSS tokens |
+| **Database** | MySQL 8.0 | Relational database with strict foreign keys & indexing |
+| **AI Integration** | Google Gemini API | Contextual academic tutoring and study assistant |
+| **Testing** | Pest 5 & Flutter Test | 218+ PHP feature/unit tests, 30+ Flutter widget tests |
+| **Containerization** | Docker & Docker Compose | Local MySQL containerization |
+
+---
+
+## 📂 Project Structure
+
+```
+due/
+├── app/
+│   ├── Enums/                  # SubscriptionTier, UserRole, UrgencyLevel, etc.
+│   ├── Http/
+│   │   ├── Controllers/        # Inertia Web Controllers (Assignments, Classes, etc.)
+│   │   │   ├── Admin/          # Super Admin dashboard & user management
+│   │   │   └── Api/V1/         # Mobile REST API endpoints (Auth, Coursework, AI)
+│   │   └── Middleware/         # Feature gates, stealth admin mode, subscription checks
+│   ├── Models/                 # User, CourseClass, Assignment, Note, Subscription
+│   ├── Policies/               # Granular ownership authorization policies
+│   └── Services/               # Shared domain logic (Urgency, AI, Storage, Subscriptions)
+├── database/
+│   ├── factories/              # Model factories for robust testing
+│   ├── migrations/             # MySQL schema migrations
+│   └── seeders/                # DatabaseSeeder & DemoDataSeeder
+├── mobile/                     # Complete Flutter cross-platform mobile client
+│   ├── lib/
+│   │   ├── config/             # API routes & theme tokens
+│   │   ├── models/             # Strongly typed Dart models
+│   │   ├── providers/          # State management (Auth, Assignments, Courses, AI)
+│   │   ├── screens/            # Mobile views (Dashboard, Courses, Assignments, Settings)
+│   │   ├── services/           # ApiClient, DeviceService, Storage
+│   │   └── widgets/            # Reusable zero-radius UI components
+│   └── test/                   # Comprehensive Flutter widget & integration tests
+├── resources/
+│   ├── css/                    # Tailwind CSS definitions and zero-radius rule
+│   └── js/
+│       ├── components/         # Reusable React UI components
+│       ├── layouts/            # AppLayout, AdminLayout, SettingsLayout
+│       └── pages/              # Inertia page views (Dashboard, Assignments, Admin, etc.)
+├── routes/
+│   ├── api.php                 # Mobile REST API routes (/api/v1/*)
+│   └── web.php                 # Web application routes
+└── tests/
+    ├── Feature/                # Pest feature tests (Auth, CRUD, Admin, Subscriptions, AI)
+    └── Unit/                   # Unit tests for domain calculations
+```
+
+---
+
+## ⚙️ Prerequisites
+
+Ensure you have the following installed on your development machine:
+
+- **PHP**: `^8.3` (or PHP 8.4/8.5 via Laravel Herd / CLI)
+- **Composer**: `^2.8`
+- **Node.js**: `^20.0` & **npm**
+- **Docker & Docker Compose**: For local MySQL 8 database
+- **Flutter SDK**: `^3.19` (Optional, required only for mobile client development)
+
+---
+
+## 🚀 Installation & Setup
+
+### 1. Backend & Database Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/due.git
+   cd due
+   ```
+
+2. **Install PHP dependencies:**
+   ```bash
+   composer install
+   ```
+
+3. **Configure Environment File:**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+4. **Start the MySQL container via Docker Compose:**
    ```bash
    docker compose up -d
    ```
-   *(Starts MySQL 8 on `127.0.0.1:3306` with database `due` and persistent volume storage).*
+   *This initializes a MySQL 8 container bound to `127.0.0.1:3306` with database `due` and user `root` (`password: password`).*
 
-2. **Verify `.env` configuration:**
+5. **Verify database credentials in `.env`:**
    ```env
    DB_CONNECTION=mysql
    DB_HOST=127.0.0.1
@@ -31,253 +233,181 @@ A focused, modern coursework and assignment tracking application built with **La
    SESSION_DRIVER=database
    ```
 
-3. **Run database migrations:**
+6. **Run migrations:**
    ```bash
    php artisan migrate
    ```
 
-4. **Seed the database:**
-   - **Option A: Base User Only**
+7. **Seed the database:**
+   - **Option A: Base Users (Empty Academic Catalog)**
      ```bash
      php artisan db:seed
      ```
-     *(Creates `student@due.local` with password `password` and an empty academic catalog).*
-   - **Option B: Realistic Demo Coursework & Data (Recommended for Testing & Demos)**
+   - **Option B: Realistic Demo Coursework & Data (Recommended)**
      ```bash
      php artisan db:seed --class=DemoDataSeeder
      ```
-     *(Creates `student@due.local` with 4 realistic courses, 7 assignments covering all urgency states — overdue, due today, due soon, upcoming, completed — and associated notes).*
+     *Populates realistic courses (Distributed Systems, Database Architecture, etc.), 7 assignments across all urgency states, study notes, and active subscriptions.*
 
-### 3. Starting the Development Servers
-
-1. **Backend Server (Laravel):**
+8. **Start the Laravel backend development server:**
    ```bash
    php artisan serve
    ```
-   Application will be live at: **http://127.0.0.1:8000**
+   The backend will be available at: **http://127.0.0.1:8000**
 
-2. **Frontend Assets (Vite Development Server):**
+---
+
+### 2. Frontend Web Client
+
+1. **Install Node dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Start the Vite development server:**
    ```bash
    npm run dev
    ```
-   *(Or compile for production with `npm run build`).*
+   Open your browser and navigate to **http://127.0.0.1:8000**.
+
+3. **(Optional) Build production assets:**
+   ```bash
+   npm run build
+   ```
 
 ---
 
-## 🏛️ Application Architecture
+### 3. Flutter Mobile Client
 
-### 1. Web Application: Laravel 13 + React 19 + Inertia.js 3
-- **Monolithic Clarity with SPA Feel:** Rather than building a separate REST/GraphQL client with duplicate routing, client-side state managers, and mock endpoints, **Inertia.js** bridges Laravel and React.
-- **Data Flow:**
-  - Standard browser requests load the root HTML template (`resources/views/app.blade.php`).
-  - Subsequent transitions are performed via Inertia `X-Inertia` AJAX requests, which return JSON containing the component name and controller page props.
-  - React renders pages smoothly without full browser reloads.
-- **Authentication & Security:**
-  - Session-based cookie authentication backed by Laravel Fortify.
-  - CSRF protection on all non-GET requests (`X-XSRF-TOKEN` automatically handled by Axios/Inertia).
-  - Explicit server-side ownership enforcement: all database queries and mutations are scoped to `$request->user()->id` with Laravel Policies.
+1. **Navigate to the mobile directory:**
+   ```bash
+   cd mobile
+   ```
 
-### 2. Future Flutter Client Architecture (Mobile App)
-When introducing a native **Flutter** mobile client in the future, the existing backend cleanly supports mobile consumption without restructuring:
-- **Authentication with Laravel Sanctum:**
-  - Mobile clients will authenticate via a dedicated `/api/v1/login` endpoint issuing a personal access token (`Bearer <token>`).
-  - The token is stored securely in Flutter's `flutter_secure_storage` (iOS Keychain / Android Keystore).
-  - Sanctum's `auth:sanctum` middleware validates the Bearer token on every mobile API request.
-- **Shared Business Logic Layer:**
-  - Business rules—specifically **deadline calculations, urgency levels, and time zone boundary checks**—are encapsulated in the dedicated service class `App\Services\DeadlineUrgencyService`.
-  - Both the Inertia web controllers (`DashboardController`, `AssignmentController`) and future REST API controllers (`Api\V1\AssignmentController`) call this identical service layer, guaranteeing that mobile and web clients never produce differing urgency calculations or status evaluations.
+2. **Install Flutter packages:**
+   ```bash
+   flutter pub get
+   ```
 
-```
-                  ┌────────────────────────────────────────┐
-                  │          Laravel 13 Backend            │
-                  │                                        │
-                  │  ┌──────────────────────────────────┐  │
-                  │  │     DeadlineUrgencyService       │  │
-                  │  │  (Urgency & Deadline Logic)      │  │
-                  │  └───────────────┬──────────────────┘  │
-                  │                  │                     │
-                  │       ┌──────────┴──────────┐          │
-                  │       ▼                     ▼          │
-                  │  Inertia Web          Sanctum REST     │
-                  │  Controllers          API Controllers  │
-                  └───────┬─────────────────────┬──────────┘
-                          │ (Session Auth)      │ (Bearer Tokens)
-                          │ (X-Inertia Props)   │ (JSON Payloads)
-                          ▼                     ▼
-                  ┌───────────────┐     ┌───────────────┐
-                  │ React 19 Web  │     │ Future Flutter│
-                  │ (Inertia SPA) │     │ Mobile Client │
-                  └───────────────┘     └───────────────┘
-```
+3. **Configure Environment API Base URL:**
+   The mobile client defaults to `http://10.0.2.2:8000/api/v1` for Android Emulators and `http://127.0.0.1:8000/api/v1` for iOS Simulators / Web. You can customize this in `mobile/lib/config/api_config.dart`.
+
+4. **Run the mobile app:**
+   ```bash
+   flutter run
+   ```
 
 ---
 
-## ⚡ The N+1 Query Problem: Diagnosis & Verification
+### 4. Default Demo Accounts
 
-### 1. What is the N+1 Query Problem?
-The **N+1 query problem** happens when an ORM executes 1 query to fetch a parent record set (e.g. 50 assignments), and then executes an additional separate database query for **every individual parent record** to fetch a related model (e.g. the course each assignment belongs to). For $N = 50$ assignments, the application issues $1 + 50 = 51$ queries instead of 2. On high-traffic pages, this rapidly saturates database connection pools and introduces severe latency.
+When seeded using `db:seed` or `DemoDataSeeder`, use the following credentials to sign in:
 
-### 2. Where Did It Occur in Due?
-In both the **Assignments List** (`/assignments`) and the **Dashboard Upcoming Feed** (`/dashboard`), each assignment displays its parent course's name:
-```tsx
-{assignment.course_class ? (
-    <span>{assignment.course_class.course_name}</span>
-) : null}
-```
-If assignments were queried naively via:
-```php
-// NAIVE IMPLEMENTATION (Triggers N+1):
-$assignments = Assignment::where('user_id', $user->id)->get();
-```
-Accessing `$assignment->course_class` in PHP or serializing it for Inertia causes Eloquent to issue a separate `SELECT * FROM classes WHERE id = ?` query for every single assignment in the collection.
-
-### 3. The Fix Applied
-We resolved this using Eloquent's eager loading mechanisms:
-1. **Eager Loading Foreign Relations (`with`):**
-   ```php
-   // OPTIMIZED IMPLEMENTATION:
-   $assignments = Assignment::where('user_id', $user->id)
-       ->with(['course_class'])
-       ->paginate(15);
-   ```
-   Eloquent compiles this into precisely **two queries**, regardless of whether 10 or 1,000 assignments are retrieved:
-   ```sql
-   -- Query 1: Fetch paginated assignments
-   SELECT * FROM `assignments` WHERE `user_id` = 1 ORDER BY `deadline` ASC LIMIT 15;
-
-   -- Query 2: Eager load all referenced classes in a single IN clause
-   SELECT * FROM `classes` WHERE `id` IN (1, 2, 4);
-   ```
-
-2. **Aggregates Without Loading (`withCount`):**
-   On the courses index (`/classes`), to display the number of assignments per class without hydrating every assignment model:
-   ```php
-   $classes = CourseClass::where('user_id', $user->id)
-       ->withCount('assignments')
-       ->paginate(15);
-   ```
-   This executes a performant subquery (`SELECT COUNT(*) FROM assignments...`) inside the primary query.
-
-### 4. How Was It Verified?
-We wrote an automated feature test in [tests/Feature/Dashboard/DashboardQueryCountTest.php](file:///home/zeamanuel/projects/zainx/due/tests/Feature/Dashboard/DashboardQueryCountTest.php) that enables Laravel's query logger (`DB::enableQueryLog()`) and proves $O(1)$ query complexity:
-```php
-test('dashboard query count does not grow linearly with assignment count', function () {
-    // 1. Measure query count with 3 assignments across 3 classes
-    DB::flushQueryLog();
-    $responseA = $this->actingAs($user)->get(route('dashboard'));
-    $queryCountA = count(DB::getQueryLog());
-
-    // 2. Add 15 MORE assignments across new classes
-    Assignment::factory()->count(15)->create(['user_id' => $user->id]);
-
-    // 3. Measure query count again
-    DB::flushQueryLog();
-    $responseB = $this->actingAs($user)->get(route('dashboard'));
-    $queryCountB = count(DB::getQueryLog());
-
-    // Query count must remain completely identical
-    expect($queryCountB)->toBe($queryCountA);
-});
-```
-This test passes and guarantees N+1 regressions cannot enter the codebase.
+| Role | Email | Password | Default Tier |
+| :--- | :--- | :--- | :--- |
+| **Student** | `student@due.local` | `password` | Free Tier (or Scholar with Demo Data) |
+| **Super Admin** | `admin@due.local` | `password` | Genius Tier (Full Admin Access) |
 
 ---
 
-## 🔍 How to Inspect the Database (Prisma Studio Equivalents)
+## 🔍 Database Management & Inspection
 
-If you are accustomed to `npx prisma studio`, here are the easiest ways to view and interact with your MySQL database:
+### Terminal Inspection Tools (Built-in)
 
-### Option A: Built-in Terminal Inspection (Zero Setup)
-
-- **View database summary, open connections, and table list:**
+- **View database tables, row counts, and connection health:**
   ```bash
   php artisan db:show
   ```
 
-- **Inspect table schema, row counts, and indexes:**
+- **Inspect specific schema structures:**
   ```bash
   php artisan db:table classes
   php artisan db:table assignments
-  php artisan db:table assignment_notes
+  php artisan db:table subscriptions
   ```
 
-- **Interactive Model REPL (`php artisan tinker`):**
-  A live PHP interactive shell (similar to the Node REPL) to query Eloquent models:
+- **Interactive Eloquent REPL (`tinker`):**
   ```bash
   php artisan tinker
   ```
   ```php
-  // View all users
-  User::all();
+  // Inspect user and their active subscription
+  $user = User::where('email', 'student@due.local')->first();
+  $user->subscription_tier;
 
-  // Inspect courses with their eager-loaded assignments
-  CourseClass::with('assignments')->get();
-
-  // Inspect urgency for an assignment
-  $assignment = Assignment::first();
-  $assignment->urgency; // Returns ['label' => '...', 'variant' => '...']
-
-  exit;
+  // View assignments with their calculated urgency
+  Assignment::with('course_class')->get()->map(fn($a) => [$a->title, $a->urgency]);
   ```
 
-### Option B: Free GUI Desktop Apps (Closest to Prisma Studio)
-Connect any visual database manager to your local Docker MySQL instance:
-- **[Beekeeper Studio](https://www.beekeeperstudio.io/)** (Open source, sleek, modern — very similar to Prisma Studio)
-- **[TablePlus](https://tableplus.com/)** (Lightweight, popular among Laravel developers)
-- **[DBeaver](https://dbeaver.io/)** (Universal open-source DB client)
+### Desktop GUI Clients
+You can connect your preferred visual database client to the local Docker MySQL container:
+- **[Beekeeper Studio](https://www.beekeeperstudio.io/)** (Recommended, open source)
+- **[TablePlus](https://tableplus.com/)**
+- **[DBeaver](https://dbeaver.io/)**
 
-**Connection Credentials:**
-| Setting | Value |
-| :--- | :--- |
-| **Host** | `127.0.0.1` |
-| **Port** | `3306` |
-| **User** | `root` |
-| **Password** | `password` |
-| **Database** | `due` |
+**Credentials:**
+- **Host**: `127.0.0.1` | **Port**: `3306`
+- **User**: `root` | **Password**: `password` | **Database**: `due`
 
 ---
 
-## 🛠️ Essential Terminal Commands Cheat Sheet
+## 🧪 Testing & Quality Assurance
 
-### Database & Migrations
-| Task | Laravel Command | Prisma Analogy | What it does |
-| :--- | :--- | :--- | :--- |
-| **Run migrations** | `php artisan migrate` | `npx prisma migrate dev` | Applies new migrations to the database. |
-| **Reset database** | `php artisan migrate:fresh` | `npx prisma migrate reset` | Drops all tables and re-runs all migrations. |
-| **Reset & seed demo** | `php artisan migrate:fresh --seed` | `prisma migrate reset` + seed | Resets database and seeds base user. |
-| **Seed rich demo data** | `php artisan db:seed --class=DemoDataSeeder` | Custom seed script | Populates courses, assignments, and notes. |
-| **Migration status** | `php artisan migrate:status` | `npx prisma migrate status` | Shows which migrations have run. |
+Due maintains a high standard of automated test coverage across both backend and mobile layers.
 
-### Development, Quality & Testing
-| Task | Command | Description |
+### Backend Tests (Pest PHP)
+```bash
+# Run the entire test suite (218+ tests)
+php artisan test
+
+# Run tests with parallel execution
+php artisan test --parallel
+
+# Run specific domain test suites
+php artisan test --filter=Assignment
+php artisan test --filter=Subscription
+php artisan test --filter=SuperAdminStealthAndDashboardTest
+```
+
+### Mobile Tests (Flutter)
+```bash
+cd mobile
+
+# Run Flutter static analysis
+flutter analyze
+
+# Run all Flutter widget & unit tests
+flutter test
+```
+
+### Code Style & Type Safety
+```bash
+# Format PHP code with Laravel Pint
+vendor/bin/pint
+
+# Verify PHP code formatting without changes
+vendor/bin/pint --test
+
+# Run TypeScript typecheck
+npm run types:check
+```
+
+---
+
+## 🔧 Environment Configuration
+
+Key environment variables in `.env`:
+
+| Variable | Description | Default |
 | :--- | :--- | :--- |
-| **Start server** | `php artisan serve` | Starts local PHP development server on port 8000. |
-| **List routes** | `php artisan route:list` | Displays all registered URLs, HTTP methods, and actions. |
-| **Run tests** | `php artisan test` | Executes the Pest automated test suite (108 tests). |
-| **Format code** | `vendor/bin/pint` | Fixes PHP code style according to Laravel conventions. |
-| **Check code style** | `vendor/bin/pint --test` | Verifies code style without modifying files. |
-| **TypeScript check** | `npm run types:check` | Runs `tsc --noEmit` to verify React/TypeScript types. |
-| **Build frontend** | `npm run build` | Builds and bundles frontend assets with Vite. |
-
----
-
-## 📐 Project Design System & Integrity Rules
-
-1. **Strict Zero Corner Radius Rule:**
-   - Every element—buttons, inputs, cards, tables, badges, modals, tooltips, and avatars—strictly uses `border-radius: 0px` (`rounded-none`).
-   - Reinforced at root level via `*, *::before, *::after { border-radius: 0px !important; }` in [resources/css/app.css](file:///home/zeamanuel/projects/zainx/due/resources/css/app.css).
-
-2. **Default Dark Theme & Database-Backed Persistence (Zero Local Storage):**
-   - Default theme is dark for all visitors, inspired by the high-contrast aesthetic of `laravel.com`.
-   - Palette powered by semantic CSS variables (`--background`, `--foreground`, `--border`, `--card`, `--primary`, `--muted`).
-   - Monospace typography used for all timestamps, credit units, ECTS tags, and status badges.
-   - **Zero LocalStorage:** The user's theme preference (`light`, `dark`, `system`) is persisted directly in the MySQL database (`users.appearance`) and synchronized via cookie for instant server-side rendering. User preferences remain consistent across different computers, browsers, and mobile devices without relying on `localStorage`.
-
-3. **Database Integrity & Foreign Keys:**
-   - **`classes`:** Belongs to `users` (`cascadeOnDelete`).
-   - **`assignments`:** Belongs to `users` (`cascadeOnDelete`) and `classes` with **`restrictOnDelete()`**. Deleting a course that has registered assignments is blocked by the database and controller to prevent accidental coursework loss.
-   - **`assignment_notes`:** Belongs to `assignments` (`cascadeOnDelete`).
-
-4. **Automated Testing Suite:**
-   - **114 tests** written with Pest 5 under `tests/Feature/` and `tests/Unit/`.
-   - Covers guest protection, authenticated CRUD, ownership enforcement, deadline calculations, notes CRUD, session management, theme persistence, and query count assertions.
+| `APP_NAME` | Name of the application | `Due` |
+| `APP_ENV` | Application environment | `local` |
+| `APP_URL` | Base web application URL | `http://127.0.0.1:8000` |
+| `DB_CONNECTION` | Database driver | `mysql` |
+| `DB_HOST` | Database host | `127.0.0.1` |
+| `DB_PORT` | Database port | `3306` |
+| `DB_DATABASE` | Database name | `due` |
+| `DB_USERNAME` | Database username | `root` |
+| `DB_PASSWORD` | Database password | `password` |
+| `GEMINI_API_KEY` | Google Gemini API key for Copilot | `(Optional for local mock AI)` |
+| `FILESYSTEM_DISK` | Storage driver for uploaded resources | `local` |
